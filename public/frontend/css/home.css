@@ -1,0 +1,1116 @@
+/* ═══ home page styles ═══ */
+@media (max-width: 600px) {
+      main { padding: 12px 0 60px !important; }
+      header { padding: 0 12px; }
+      .sv-brand-card { border-radius: 0; border-left: none; border-right: none; }
+      .sv-brands-grid { gap: 0; }
+      .sv-main-layout { gap: 6px; }
+      .sv-shared-chart-wrap { border-radius: 0; border-left: none; border-right: none; }
+      .sv-compact-section { margin-top: 16px; }
+      .ticker-wrap { border-radius: 0; border-left: none; border-right: none; }
+      .world-chart-card { border-radius: 0; border-left: none; border-right: none; }
+      .world-charts-grid { gap: 0; }
+      .sv-section-head { padding: 0 12px; }
+      .sv-footnote { padding: 0 12px; }
+    }
+
+    /* PAGE HEADER */
+    .page-header { margin-bottom: 32px; }
+    .page-header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.4px; margin-bottom: 5px; }
+    .page-header p  { font-size: 13px; color: var(--muted); }
+
+    /* TICKER */
+    .ticker-wrap {
+      background: var(--bg2);
+      border: 1px solid rgba(245,197,24,0.15);
+      border-radius: var(--radius); overflow: hidden; margin-bottom: 28px;
+    }
+    .ticker-label {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 16px 7px; font-size: 11px; font-weight: 700;
+      color: var(--gold2); text-transform: uppercase; letter-spacing: 0.1em;
+      background: linear-gradient(90deg, rgba(245,197,24,0.08), transparent);
+      border-bottom: 1px solid rgba(245,197,24,0.08);
+    }
+    .tradingview-widget-container.ticker-tv { width: 100%; min-height: 46px; }
+
+    /* SECTION */
+    .section-block { margin-bottom: 44px; }
+    .section-head {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 20px;
+    }
+    .section-icon {
+      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .section-head h2 { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+    .section-head p  { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+
+    /* TV CHARTS GRID */
+    .tv-charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media(max-width:960px) { .tv-charts-grid { grid-template-columns: 1fr; } }
+
+    .tv-chart-card {
+      border-radius: var(--radius); overflow: hidden;
+      display: flex; flex-direction: column;
+      border: 1px solid var(--border); background: var(--bg2);
+      transition: border-color .25s, box-shadow .25s, transform .25s;
+    }
+    .tv-chart-card:hover { transform: translateY(-3px); }
+
+    .card-gold   { border-color: rgba(245,197,24,0.22); box-shadow: 0 0 0 1px rgba(245,197,24,0.06); }
+    .card-gold:hover { border-color: rgba(245,197,24,0.45); box-shadow: 0 10px 40px rgba(245,197,24,0.12); }
+    .card-silver { border-color: rgba(176,190,197,0.22); box-shadow: 0 0 0 1px rgba(176,190,197,0.06); }
+    .card-silver:hover { border-color: rgba(176,190,197,0.45); box-shadow: 0 10px 40px rgba(176,190,197,0.1); }
+
+    .card-head {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .card-gold   .card-head { background: linear-gradient(90deg, rgba(245,197,24,0.1), transparent); border-bottom-color: rgba(245,197,24,0.1); }
+    .card-silver .card-head { background: linear-gradient(90deg, rgba(176,190,197,0.08), transparent); border-bottom-color: rgba(176,190,197,0.1); }
+
+    .card-badge {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .badge-gold   { background:linear-gradient(135deg,rgba(245,197,24,.25),rgba(245,197,24,.08)); border:1px solid rgba(245,197,24,.3); }
+    .badge-silver { background:linear-gradient(135deg,rgba(176,190,197,.2),rgba(176,190,197,.06)); border:1px solid rgba(176,190,197,.25); }
+
+    .card-info { flex: 1; }
+    .card-name { font-size: 16px; font-weight: 800; }
+    .card-gold  .card-name { color: var(--gold2); }
+    .card-silver .card-name { color: var(--silver2); }
+    .card-symbol { font-size: 11px; color: var(--muted); margin-top: 3px; font-family:'JetBrains Mono',monospace; letter-spacing:.03em; }
+
+    .card-powered { text-align: right; flex-shrink: 0; }
+    .card-powered span { display:block; font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+    .card-powered strong { font-size:12px; font-weight:700; color:var(--blue); }
+
+    .card-chart { width:100%; height:600px; display:block; }
+    .card-chart .tradingview-widget-container { width:100%; height:100%; }
+    .card-chart .tradingview-widget-container__widget { width:100%; height:calc(100% - 32px); }
+
+    /* ══════════════════════════════════
+       SILVER PRICE SECTION
+    ══════════════════════════════════ */
+    .silver-section {
+      background: var(--bg2);
+      border: 1px solid rgba(176,190,197,0.18);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Unit tabs */
+    .sv-unit-tabs { display: flex; gap: 6px; }
+    .sv-unit-btn, .ac-unit-btn, .dj-unit-btn {
+      padding: 7px 16px; border-radius: var(--radius-sm);
+      font-size: 12.5px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--bg3);
+      color: var(--muted2); cursor: pointer;
+      transition: all .2s; font-family: 'Inter', sans-serif;
+    }
+    .sv-unit-btn:hover, .ac-unit-btn:hover, .dj-unit-btn:hover { border-color: var(--border2); color: var(--text); }
+    .sv-unit-btn.active, .ac-unit-btn.active, .dj-unit-btn.active {
+      background: linear-gradient(135deg, #b0bec5, #78909c);
+      color: #07090f; border-color: transparent;
+      box-shadow: 0 2px 10px rgba(176,190,197,0.35);
+    }
+
+    /* Period buttons */
+    .sv-period-btn, .ac-period-btn, .dj-period-btn {
+      padding: 5px 13px; border-radius: 6px;
+      font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--bg3);
+      color: var(--muted2); cursor: pointer;
+      transition: all .2s; font-family: 'Inter', sans-serif;
+    }
+    .sv-period-btn:hover, .ac-period-btn:hover, .dj-period-btn:hover { border-color: var(--border2); color: var(--text); }
+    .sv-period-btn.active, .ac-period-btn.active, .dj-period-btn.active {
+      background: linear-gradient(135deg, var(--blue), #6d28d9);
+      color: #fff; border-color: transparent;
+      box-shadow: 0 2px 8px rgba(79,122,248,0.35);
+    }
+
+    /* Loading / spinner */
+    .sv-loading {
+      display: flex; align-items: center; justify-content: center;
+      height: 100%; color: var(--muted); font-size: 14px; gap: 10px;
+    }
+    .sv-spinner {
+      width: 20px; height: 20px; border: 2px solid var(--border2);
+      border-top-color: var(--silver); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .sv-no-data {
+      padding: 32px 24px; text-align: center;
+      color: var(--muted); font-size: 13px;
+    }
+    .sv-no-data strong { color: var(--text2); display: block; margin-bottom: 6px; }
+
+    .foot-note { text-align:center; margin-top:32px; font-size:12px; color:var(--muted); }
+
+    /* ══ AI TREND ANALYSIS BOX ══ */
+    .sv-trend-box {
+      background: linear-gradient(135deg, rgba(79,122,248,0.06), rgba(168,85,247,0.06));
+      border: 1px solid rgba(79,122,248,0.2);
+      border-radius: var(--radius);
+      padding: 16px 20px 14px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .sv-trend-box::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #4f7af8, #a855f7, #f59e0b);
+      opacity: 0.7;
+    }
+    .sv-trend-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .sv-trend-icon {
+      width: 28px; height: 28px; border-radius: 7px;
+      background: linear-gradient(135deg, rgba(79,122,248,0.2), rgba(168,85,247,0.2));
+      display: flex; align-items: center; justify-content: center;
+      color: #a78bfa; flex-shrink: 0;
+    }
+    .sv-trend-label {
+      font-size: 12px; font-weight: 700;
+      color: #a78bfa; text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .sv-trend-time {
+      margin-left: auto; font-size: 10.5px;
+      color: var(--muted); white-space: nowrap;
+    }
+    .sv-trend-body {
+      font-size: 13.5px; line-height: 1.7;
+      color: #c8cfe0;
+    }
+    .sv-trend-body.has-content {
+      border-left: 3px solid rgba(79,122,248,0.35);
+      padding-left: 14px;
+    }
+    .sv-trend-skeleton { display: flex; flex-direction: column; gap: 8px; }
+    .sv-trend-skel-line {
+      height: 14px; border-radius: 4px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%;
+      animation: svTrendShimmer 1.5s ease-in-out infinite;
+    }
+    @keyframes svTrendShimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .sv-trend-stats {
+      display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;
+    }
+    .sv-trend-stat {
+      font-size: 11px; font-weight: 600;
+      padding: 3px 10px; border-radius: 5px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--muted2);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .sv-trend-stat.up   { color: var(--green); border-color: rgba(34,201,122,0.2); background: rgba(34,201,122,0.06); }
+    .sv-trend-stat.down { color: var(--red);   border-color: rgba(245,82,82,0.2);  background: rgba(245,82,82,0.06); }
+    .sv-trend-error { font-size: 12px; color: var(--muted); font-style: italic; }
+
+    /* Highlight keywords in AI analysis */
+    .sv-hl {
+      display: inline; padding: 1px 6px; border-radius: 4px;
+      font-weight: 700; white-space: nowrap;
+    }
+    .sv-hl.hl-buy  { color: #22c97a; background: rgba(34,201,122,0.12); }
+    .sv-hl.hl-sell { color: #f55252; background: rgba(245,82,82,0.12); }
+    .sv-hl.hl-wait { color: #f59e0b; background: rgba(245,158,11,0.12); }
+    .sv-hl.hl-up   { color: #22c97a; }
+    .sv-hl.hl-down { color: #f55252; }
+    .sv-hl.hl-flat { color: #64748b; }
+    .sv-hl.hl-label { color: #4f7af8; font-weight: 800; }
+    @media (max-width: 600px) {
+      .sv-trend-box { padding: 12px 14px 10px; border-radius: 0; border-left: none; border-right: none; }
+      .sv-trend-body { font-size: 12.5px; }
+      .sv-trend-stats { gap: 6px; }
+      .sv-trend-stat { font-size: 10px; padding: 2px 8px; }
+    }
+
+    /* ══ COMPACT SILVER BRAND SECTION ══ */
+    .sv-compact-section { margin-top: 32px; }
+    .sv-section-head {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+    }
+    .sv-section-head .sv-section-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg,#b0bec5,#546e7a);
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; flex-shrink:0;
+    }
+    .sv-section-head h2 { font-size:17px; font-weight:800; color:#e4e8f2; margin:0; }
+    .sv-section-head p  { font-size:11.5px; color:var(--muted); margin:2px 0 0; }
+
+    /* Layout 2 cột */
+    .sv-main-layout {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: stretch;
+    }
+    @media (max-width:1100px) { .sv-main-layout { grid-template-columns: 1fr; } }
+    .sv-main-layout > * { min-width: 0; }
+
+    .sv-brands-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+    }
+    @media (max-width:600px) { .sv-brands-grid { grid-template-columns: 1fr; } }
+
+    .sv-brand-card, .gold-brand-card {
+      background: var(--bg2);
+      border: 1px solid rgba(176,190,197,0.15);
+      border-radius: var(--radius);
+      padding: 14px 16px 12px;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .sv-brand-card:hover, .gold-brand-card:hover { border-color: rgba(176,190,197,0.35); }
+    .gold-brand-card:hover { border-color: rgba(245,197,24,0.35); }
+    
+    .sv-brand-card.active {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 1px var(--blue), 0 4px 20px rgba(79,122,248,0.12);
+    }
+    .gold-brand-card.active {
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 1px #f59e0b, 0 4px 20px rgba(245,197,24,0.15);
+    }
+
+    .sv-card-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .sv-card-logo {
+      width:32px; height:32px; border-radius:8px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px; flex-shrink:0;
+    }
+    .sv-card-name { font-size:13px; font-weight:700; color:var(--silver2); }
+    .sv-card-sub  { font-size:10.5px; color:var(--muted); margin-top:1px; }
+
+    .sv-card-tabs { display:flex; gap:5px; margin-bottom:10px; }
+    .sv-tab, .gold-tab {
+      padding: 4px 10px; border-radius: 5px;
+      font-size: 11.5px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--bg3);
+      color: var(--muted2); cursor: pointer;
+      transition: all .18s; font-family:'Inter',sans-serif;
+    }
+    .sv-tab:hover, .gold-tab:hover { border-color:var(--border2); color:var(--text); }
+    .sv-tab.active {
+      background: linear-gradient(135deg,#b0bec5,#78909c);
+      color:#07090f; border-color:transparent;
+      box-shadow:0 2px 8px rgba(176,190,197,0.3);
+    }
+    .gold-tab.active {
+      background: linear-gradient(135deg,#fcd34d,#fbbf24);
+      color:#07090f; border-color:transparent;
+      box-shadow:0 2px 8px rgba(245,197,24,0.3);
+    }
+
+    .sv-card-prices { display:flex; align-items:flex-end; gap:12px; }
+    .sv-card-price-col { display:flex; flex-direction:column; gap:2px; }
+    .sv-cprice-label   { font-size:10px; color:var(--muted); }
+    .sv-cprice-buy {
+      font-size: 20px; font-weight: 900;
+      font-family:'JetBrains Mono',monospace;
+      color:#f55252; letter-spacing:-0.5px; line-height:1;
+    }
+    .sv-cprice-sell {
+      font-size: 20px; font-weight: 900;
+      font-family:'JetBrains Mono',monospace;
+      color:var(--green); letter-spacing:-0.5px; line-height:1;
+    }
+
+    @media (max-width: 1500px) {
+      .sv-cprice-buy, .sv-cprice-sell { font-size: 16px; letter-spacing: -0.3px; }
+      .sv-brand-card { padding: 12px 12px 10px; }
+      .sv-card-prices { gap: 8px; }
+    }
+    .sv-card-pct {
+      margin-left:auto; font-size:16px; font-weight:800;
+      font-family:'JetBrains Mono',monospace;
+    }
+    .sv-card-pct.up   { color:var(--green); }
+    .sv-card-pct.down { color:var(--red); }
+    .sv-card-pct-days { font-size:10px; color:var(--muted); text-align:right; margin-top:2px; }
+
+    .sv-card-bottom-row {
+      display:flex; align-items:center; justify-content:space-between; margin-top:6px;
+    }
+    .sv-card-spread {
+      font-size:11px; color:var(--muted2);
+      display:flex; align-items:center; gap:4px;
+    }
+    .sv-card-spread .spread-val {
+      font-family:'JetBrains Mono',monospace;
+      font-size:11.5px; font-weight:700; color:var(--gold2);
+    }
+
+    /* Shared chart section */
+    .sv-shared-chart-wrap {
+      background: var(--bg2);
+      border: 1px solid rgba(176,190,197,0.15);
+      border-radius: var(--radius); overflow:hidden;
+    }
+    .sv-shared-chart-bar {
+      display:flex; align-items:center; gap:10px;
+      padding: 12px 16px 10px;
+      border-bottom: 1px solid var(--border); flex-wrap:wrap;
+    }
+    .sv-chart-brand-tabs { display:flex; gap:5px; }
+    .sv-chart-brand {
+      padding: 5px 13px; border-radius:6px;
+      font-size:12px; font-weight:600;
+      border:1px solid var(--border); background:var(--bg3);
+      color:var(--muted2); cursor:pointer;
+      transition:all .18s; font-family:'Inter',sans-serif;
+    }
+    .sv-chart-brand:hover { border-color:var(--border2); color:var(--text); }
+    .sv-chart-brand.active {
+      background:linear-gradient(135deg,var(--blue),#6d28d9);
+      color:#fff; border-color:transparent;
+      box-shadow:0 2px 8px rgba(79,122,248,0.35);
+    }
+    .sv-chart-period-tabs { display:flex; gap:5px; margin-left:4px; }
+    .sv-prd, .gold-prd {
+      padding: 5px 11px; border-radius:6px;
+      font-size:11.5px; font-weight:600;
+      border:1px solid var(--border); background:var(--bg3);
+      color:var(--muted2); cursor:pointer;
+      transition:all .18s; font-family:'Inter',sans-serif;
+    }
+    .sv-prd:hover, .gold-prd:hover { border-color:var(--border2); color:var(--text); }
+    .sv-prd.active {
+      background:rgba(79,122,248,0.18);
+      color:var(--blue); border-color:rgba(79,122,248,0.4);
+    }
+    .gold-prd.active {
+      background:rgba(245,197,24,0.18);
+      color:var(--gold2); border-color:rgba(245,197,24,0.4);
+    }
+    .sv-chart-unit-label { margin-left:auto; font-size:11px; color:var(--muted); }
+    .sv-chart-unit-tabs { display:flex; gap:5px; margin-left:8px; }
+    .sv-chart-unit-btn, .gold-chart-unit-btn {
+      padding: 4px 11px; border-radius:5px;
+      font-size:11.5px; font-weight:600;
+      border:1px solid var(--border); background:var(--bg3);
+      color:var(--muted2); cursor:pointer;
+      transition:all .18s; font-family:'Inter',sans-serif;
+    }
+    .sv-chart-unit-btn:hover, .gold-chart-unit-btn:hover { border-color:var(--border2); color:var(--text); }
+    .sv-chart-unit-btn.active {
+      background:linear-gradient(135deg,#b0bec5,#78909c);
+      color:#07090f; border-color:transparent;
+      box-shadow:0 2px 8px rgba(176,190,197,0.3);
+    }
+    .gold-chart-unit-btn.active {
+      background:linear-gradient(135deg,#fcd34d,#fbbf24);
+      color:#07090f; border-color:transparent;
+      box-shadow:0 2px 8px rgba(245,197,24,0.3);
+    }
+    .sv-shared-canvas-wrap {
+      padding:12px 16px 16px; position:relative; height:320px;
+    }
+    .sv-shared-canvas-wrap canvas { width:100%!important; height:100%!important; }
+
+    .sv-footnote {
+      font-size:10.5px; color:var(--muted);
+      text-align:center; margin-top:10px; padding:0 4px;
+    }
+
+    /* ══ WORLD CHARTS SECTION ══ */
+    .world-charts-section { margin-bottom: 28px; }
+    .wc-header { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+    .wc-header-icon {
+      width:40px; height:40px; border-radius:10px;
+      background:linear-gradient(135deg,#f59e0b,#d97706);
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; flex-shrink:0;
+    }
+    .wc-header h2 { font-size:17px; font-weight:800; color:#e4e8f2; margin:0; }
+    .wc-header p  { font-size:11.5px; color:var(--muted); margin:2px 0 0; }
+
+    .world-charts-grid {
+      display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    }
+    @media (max-width:700px) { .world-charts-grid { grid-template-columns:1fr; } }
+
+    .world-chart-card {
+      background: var(--bg2);
+      border: 1px solid rgba(176,190,197,0.15);
+      border-radius: var(--radius);
+      padding: 12px 14px 10px; overflow: hidden;
+    }
+    .wc-card-label {
+      display:flex; align-items:center; gap:7px;
+      font-size:12px; font-weight:700; color:var(--silver2); margin-bottom:10px;
+    }
+    .wc-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .wc-widget-wrap { height: 220px; border-radius: 8px; overflow: hidden; }
+    .wc-widget-wrap .tradingview-widget-container,
+    .wc-widget-wrap .tradingview-widget-container__widget { width:100%; height:100%; }
+
+    /* ══ NEWS SECTION ══ */
+    .news-section { margin-top: 36px; }
+
+    .news-header {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+    }
+    .news-header-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, #4f7af8, #6d28d9);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .news-header h2 { font-size: 17px; font-weight: 800; color: #e4e8f2; margin: 0; }
+    .news-header p  { font-size: 11.5px; color: var(--muted); margin: 2px 0 0; }
+    .news-cat-link {
+      margin-left: auto; flex-shrink: 0;
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 16px; border-radius: 20px;
+      font-size: 12.5px; font-weight: 600;
+      background: rgba(79,122,248,0.1);
+      border: 1px solid rgba(79,122,248,0.25);
+      color: #7da0fa; text-decoration: none;
+      transition: all .2s; white-space: nowrap;
+    }
+    .news-cat-link:hover {
+      background: rgba(79,122,248,0.18);
+      border-color: rgba(79,122,248,0.45);
+      color: #93b4ff; text-decoration: none;
+    }
+    .news-cat-link span { transition: transform .2s; }
+    .news-cat-link:hover span { transform: translateX(3px); }
+
+    /* Category tabs */
+    .news-cat-tabs {
+      display: flex; gap: 6px; margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .news-cat-tab {
+      padding: 6px 16px; border-radius: 20px;
+      font-size: 12.5px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--bg3);
+      color: var(--muted2); cursor: pointer;
+      transition: all .2s; text-decoration: none;
+      font-family: 'Inter', sans-serif;
+    }
+    .news-cat-tab:hover { border-color: var(--border2); color: var(--text); text-decoration: none; }
+    .news-cat-tab.active {
+      background: linear-gradient(135deg, #4f7af8, #6d28d9);
+      color: #fff; border-color: transparent;
+      box-shadow: 0 2px 10px rgba(79,122,248,0.35);
+    }
+
+    /* Grid: featured left + list right */
+    .news-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      align-items: stretch;
+    }
+    @media (max-width: 800px) { .news-grid { grid-template-columns: 1fr; } }
+
+    /* Featured card */
+    .news-featured {
+      background: var(--bg2);
+      border: 1px solid rgba(79,122,248,0.15);
+      border-radius: var(--radius);
+      overflow: hidden; display: flex; flex-direction: column;
+      transition: border-color .25s, box-shadow .25s, transform .25s;
+      text-decoration: none; color: inherit;
+    }
+    .news-featured:hover {
+      border-color: rgba(79,122,248,0.4);
+      box-shadow: 0 8px 30px rgba(79,122,248,0.1);
+      transform: translateY(-3px);
+      text-decoration: none; color: inherit;
+    }
+    .news-featured-img {
+      position: relative; overflow: hidden;
+      height: 0; padding-bottom: 56%;
+    }
+    .news-featured-img img {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform .3s;
+    }
+    .news-featured:hover .news-featured-img img { transform: scale(1.05); }
+    .news-cat-badge {
+      position: absolute; top: 12px; left: 12px;
+      background: linear-gradient(135deg, #4f7af8, #6d28d9);
+      color: #fff; padding: 4px 12px; border-radius: 6px;
+      font-size: 11px; font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .news-img-placeholder {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, rgba(79,122,248,0.08), rgba(109,40,217,0.08));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px; color: var(--muted);
+    }
+    .news-featured-body { padding: 16px 20px 20px; flex: 1; }
+    .news-featured-body h3 {
+      font-size: 17px; font-weight: 800; color: #e4e8f2;
+      margin: 0 0 8px; line-height: 1.4;
+    }
+    .news-excerpt {
+      font-size: 13px; color: var(--muted2);
+      line-height: 1.6; margin: 0 0 12px;
+    }
+    .news-meta {
+      display: flex; gap: 8px; align-items: center;
+      font-size: 11.5px; color: var(--muted);
+    }
+
+    /* List cards (right) */
+    .news-list {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .news-card {
+      display: flex; gap: 14px; align-items: center;
+      background: var(--bg2);
+      border: 1px solid rgba(176,190,197,0.12);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      transition: border-color .2s, box-shadow .2s, transform .2s;
+      text-decoration: none; color: inherit;
+    }
+    .news-card:hover {
+      border-color: rgba(79,122,248,0.3);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      transform: translateY(-2px);
+      text-decoration: none; color: inherit;
+    }
+    .news-card-img {
+      width: 80px; height: 60px; flex-shrink: 0;
+      border-radius: 8px; overflow: hidden;
+    }
+    .news-card-img img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .news-img-placeholder-sm {
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, rgba(79,122,248,0.06), rgba(109,40,217,0.06));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; color: var(--muted);
+    }
+    .news-card-body { flex: 1; min-width: 0; }
+    .news-card-body h4 {
+      font-size: 13.5px; font-weight: 700; color: #e4e8f2;
+      margin: 0 0 6px; line-height: 1.4;
+      overflow: hidden; text-overflow: ellipsis;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    }
+    .news-card-meta {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; color: var(--muted);
+    }
+    .news-card-cat {
+      background: rgba(79,122,248,0.12);
+      color: #7da0fa; padding: 2px 8px;
+      border-radius: 4px; font-size: 10.5px; font-weight: 600;
+    }
+
+    /* View all button */
+    .news-view-all { text-align: center; margin-top: 20px; }
+    .news-view-all-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 28px; border-radius: var(--radius);
+      font-size: 13px; font-weight: 700;
+      background: rgba(79,122,248,0.1);
+      border: 1px solid rgba(79,122,248,0.25);
+      color: #7da0fa; text-decoration: none;
+      transition: all .2s;
+    }
+    .news-view-all-btn:hover {
+      background: rgba(79,122,248,0.18);
+      border-color: rgba(79,122,248,0.45);
+      color: #93b4ff; text-decoration: none;
+      box-shadow: 0 4px 16px rgba(79,122,248,0.15);
+    }
+    .news-view-all-btn span { transition: transform .2s; }
+      .news-view-all-btn:hover span { transform: translateX(4px); }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+      .news-section { margin-top: 20px; }
+      .news-header { padding: 0 12px; }
+      .news-cat-tabs { padding: 0 12px; }
+      .news-featured { border-radius: 0; border-left: none; border-right: none; }
+      .news-card { border-radius: 0; border-left: none; border-right: none; }
+      .news-card-img { width: 70px; height: 52px; }
+      .news-view-all { padding: 0 12px; }
+    }
+
+
+    /*  GOLD COMPACT SECTION  */
+    .gold-compact-section { margin-top: 32px; }
+
+    /* 2 c?t: brands | chart  lu�n c�ng chi?u cao */
+    .gold-compact-section .sv-main-layout { align-items: stretch; }
+
+    /* Brand grid: 2 c?t d?u nhau */
+    .gold-compact-section .sv-brands-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    /* M?i card flex-column d? fill chi?u cao */
+    .gold-compact-section .gold-brand-card {
+      flex: 1; display: flex; flex-direction: column;
+    }
+    .gold-compact-section .sv-card-prices { flex: 1; align-items: flex-end; }
+
+    /* Chart: flex-column, canvas fill */
+    .gold-compact-section .sv-shared-chart-wrap { display: flex; flex-direction: column; }
+    .gold-compact-section .sv-shared-canvas-wrap { flex: 1; min-height: 260px; }
+
+    /* Chart bar gi? chi?u cao d� ?n unit tabs (visibility kh�ng d?i layout) */
+    .gold-compact-section .sv-shared-chart-bar {
+      flex-shrink: 0; flex-wrap: wrap; min-height: 48px;
+    }
+
+    @media (max-width: 900px) {
+      .gold-compact-section .sv-brands-grid { grid-template-columns: 1fr; }
+      .gold-compact-section .sv-shared-canvas-wrap { min-height: 200px; }
+    }
+
+    /* == GOLD COMPACT SECTION == */
+    .gold-compact-section { margin-top: 32px; }
+    .gold-compact-section .sv-main-layout { align-items: stretch; }
+    .gold-compact-section .sv-brands-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 10px; align-items: stretch;
+    }
+    .gold-compact-section .gold-brand-card { flex: 1; display: flex; flex-direction: column; }
+    .gold-compact-section .sv-card-prices { flex: 1; align-items: flex-end; }
+    .gold-compact-section .sv-shared-chart-wrap { display: flex; flex-direction: column; }
+    .gold-compact-section .sv-shared-canvas-wrap { flex: 1; min-height: 260px; }
+    .gold-compact-section .sv-shared-chart-bar { flex-shrink: 0; flex-wrap: wrap; min-height: 48px; }
+    @media (max-width: 900px) {
+      .gold-compact-section .sv-brands-grid { grid-template-columns: 1fr; }
+      .gold-compact-section .sv-shared-canvas-wrap { min-height: 200px; }
+    }
+
+    /* Gold chart brand tabs - separate from silver sv-chart-brand to avoid conflicts */
+    .gold-chart-brand {
+      padding: 5px 13px; border-radius: 6px;
+      font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--bg3);
+      color: var(--muted2); cursor: pointer;
+      transition: all .18s; font-family: 'Inter', sans-serif;
+    }
+    .gold-chart-brand:hover { border-color: var(--border2); color: var(--text); }
+    .gold-chart-brand.active {
+      background: linear-gradient(135deg, var(--blue), #6d28d9);
+      color: #fff; border-color: transparent;
+      box-shadow: 0 2px 8px rgba(79,122,248,0.35);
+    }
+
+/* 
+   GOLD PRICE TABLE  Bảng kẻ giá vàng thương hiệu
+    */
+
+/* Layout: bảng trên, chart dưới */
+.gold-table-chart-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* Wrapper bảng */
+.gold-price-table-wrap {
+    overflow-x: auto;
+    border-radius: 14px;
+    border: 1px solid rgba(245,197,24,0.15);
+    background: var(--bg2, #0f172a);
+}
+
+/* Bảng */
+.gold-price-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+}
+
+/* Header */
+.gold-price-table thead tr {
+    background: linear-gradient(90deg, rgba(245,197,24,0.12) 0%, rgba(217,119,6,0.08) 100%);
+    border-bottom: 1px solid rgba(245,197,24,0.2);
+}
+.gold-price-table thead th {
+    padding: 11px 14px;
+    color: #f59e0b;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-align: center;
+}
+.gold-price-table thead th.col-brand,
+.gold-price-table thead th.col-type  { text-align: left; }
+
+/* Body rows */
+.gold-price-table tbody tr.gold-tr {
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background .18s;
+}
+.gold-price-table tbody tr.gold-tr:last-child { border-bottom: none; }
+
+/* Phân cách giữa 2 thương hiệu */
+.gold-price-table tbody tr.gold-tr-btmh {
+    border-top: 2px solid rgba(245,197,24,0.15);
+}
+
+/* Hover & active */
+.gold-tr-clickable:hover  { background: rgba(245,197,24,0.05); cursor: pointer; }
+.gold-tr-clickable.active { background: rgba(245,197,24,0.09); }
+.gold-tr-clickable.active .gold-price-val {
+    text-shadow: 0 0 8px rgba(245,197,24,0.3);
+}
+
+/* TD chung */
+.gold-price-table td {
+    padding: 12px 14px;
+    vertical-align: middle;
+    text-align: center;
+    color: var(--text, #e2e8f0);
+}
+.gold-price-table td.col-brand,
+.gold-price-table td.col-type { text-align: left; }
+
+/*  Cột thương hiệu  */
+.gold-brand-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 90px;
+}
+.gold-brand-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.gold-brand-name {
+    font-weight: 700;
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+
+/*  Cột loại vàng  */
+.gold-type-label {
+    display: block;
+    font-weight: 600;
+    color: #e2e8f0;
+    font-size: 13px;
+}
+.gold-type-sub {
+    display: block;
+    font-size: 11px;
+    color: var(--muted, #64748b);
+    margin-top: 2px;
+}
+
+/*  Giá mua/bán  */
+.gold-price-val {
+    font-family: 'JetBrains Mono', 'Fira Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    display: block;
+}
+.gold-price-val.gold-buy  { color: #22c55e; }
+.gold-price-val.gold-sell { color: #f87171; }
+
+/*  Chênh lệch  */
+.gold-spread-val {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #f59e0b;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/*  Cập nhật  */
+.gold-price-table td.col-updated {
+    font-size: 11px;
+    color: var(--muted, #64748b);
+    white-space: nowrap;
+}
+
+/*  Chart bên dưới bảng  */
+.gold-chart-wrap {
+    border-radius: 14px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .gold-price-table thead th,
+    .gold-price-table td {
+        padding: 9px 10px;
+    }
+    .gold-price-val { font-size: 12.5px; }
+    .gold-brand-name { font-size: 11.5px; }
+    .gold-price-table td.col-updated { display: none; }
+    .gold-price-table thead th.col-updated { display: none; }
+}
+
+/* 
+   GOLD TABLE  Cao nhất / Thấp nhất badges
+    */
+.gold-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-left: 7px;
+    vertical-align: middle;
+    white-space: nowrap;
+    animation: gold-badge-pop .25s ease;
+}
+@keyframes gold-badge-pop {
+    0%   { transform: scale(.7); opacity: 0; }
+    70%  { transform: scale(1.08); }
+    100% { transform: scale(1);   opacity: 1; }
+}
+.gold-badge-high {
+    background: rgba(34,197,94,.18);
+    color: #4ade80;
+    border: 1px solid rgba(34,197,94,.35);
+}
+.gold-badge-low {
+    background: rgba(239,68,68,.16);
+    color: #f87171;
+    border: 1px solid rgba(239,68,68,.3);
+}
+
+/* 
+   GOLD SECTION  COMPACT ROW LAYOUT (giong Bac section)
+    */
+
+/* Outer wrapper: bang trai + chart phai, chia 2 cot */
+.gold-table-chart-layout {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch;
+    gap: 0;
+    min-height: 0;
+}
+
+/* Bang gia vang  co lai de vua voi layout ngang */
+.gold-price-table-wrap {
+    flex: 0 0 auto;
+    width: 56%;
+    overflow-x: auto;
+    border-right: 1px solid rgba(245,197,24,0.15);
+}
+
+/* Chart panel  chiem phan con lai */
+.gold-chart-wrap {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border-left: none !important;
+    border-radius: 0 !important;
+    /* override top-border dang set o inline */
+}
+
+/* Thu nho chart canvas de gon hon */
+.gold-chart-wrap .sv-shared-canvas-wrap {
+    flex: 1;
+    min-height: 220px;
+    max-height: 300px;
+}
+
+/* Giam padding bang cho vua man hinh */
+.gold-price-table td,
+.gold-price-table thead th {
+    padding: 10px 10px !important;
+    font-size: 12.5px !important;
+}
+.gold-type-label { font-size: 12.5px !important; }
+.gold-type-sub   { font-size: 10.5px !important; }
+.gold-price-val  { font-size: 13px !important; }
+.gold-spread-val { font-size: 12px !important; }
+
+/* Col updated  an o man hinh vua (tiet kiem chieu rong) */
+.gold-price-table .col-updated { min-width: 90px; font-size: 11px; color: var(--muted2); }
+
+/* Brand tabs tren chart  wrap xuong khi khong du rong */
+.gold-chart-wrap .sv-chart-brand-tabs { flex-wrap: wrap; gap: 4px; }
+.gold-chart-wrap .sv-shared-chart-bar { flex-wrap: wrap; gap: 6px; padding: 10px 14px; }
+
+/* Responsive: xep chong khi nho hon 860px */
+@media (max-width: 860px) {
+    .gold-table-chart-layout {
+        flex-direction: column !important;
+    }
+    .gold-price-table-wrap {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(245,197,24,0.15);
+    }
+    .gold-chart-wrap .sv-shared-canvas-wrap {
+        min-height: 200px;
+    }
+}
+
+/* Gold spread unit label (/chi hoac /luong) */
+.gold-spread-unit {
+    display: block;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--muted2, #64748b);
+    letter-spacing: .02em;
+    margin-top: 1px;
+}
+
+/* Thêm css cho brand time */
+.gold-brand-time {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--muted2, #64748b);
+    font-weight: 500;
+}
+
+
+/* Spacing & Update Time layout fix */
+.gold-table-chart-layout { gap: 16px !important; }
+.brand-updated-time { font-size: 10.5px; color: var(--muted2); margin-top: 4px; display: block; font-weight: normal; }
+
+
+/* ═══════════════════════════
+   GOLD SECTION – MOBILE RESPONSIVE FIX
+    */
+
+/* Mobile: bảng gold xếp chồng, ẩn cột spread, chart hiện bên dưới */
+@media (max-width: 767px) {
+
+    /* 1. Layout: bảng trên, chart dưới  không scroll ngang */
+    .gold-table-chart-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0 !important;
+    }
+
+    /* 2. Bảng giá: full width, không tràn */
+    .gold-price-table-wrap {
+        width: 100% !important;
+        overflow-x: hidden !important;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(245,197,24,0.15) !important;
+    }
+
+    /* 3. Ẩn cột spread trên mobile để giảm tải */
+    .gold-price-table th.col-spread,
+    .gold-price-table td.col-spread {
+        display: none !important;
+    }
+
+    /* 4. Thu gọn padding bảng */
+    .gold-price-table thead th,
+    .gold-price-table td {
+        padding: 8px 8px !important;
+        font-size: 12px !important;
+    }
+
+    /* 5. Số giá mua/bán nhỏ lại vừa màn hình */
+    .gold-price-val {
+        font-size: 12px !important;
+        white-space: nowrap;
+    }
+
+    /* 6. Tên thương hiệu */
+    .gold-brand-name {
+        font-size: 11px !important;
+        line-height: 1.3 !important;
+    }
+
+    /* 7. Loại vàng */
+    .gold-type-label {
+        font-size: 12px !important;
+    }
+    .gold-type-sub {
+        font-size: 10px !important;
+    }
+
+    /* 8. HIỆn chart  đây là bug chính */
+    .gold-chart-wrap {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        min-height: 0 !important;
+        border-radius: 0 0 12px 12px !important;
+        border-left: 1px solid rgba(245,197,24,0.2) !important;
+        border-right: 1px solid rgba(245,197,24,0.2) !important;
+    }
+
+    /* 9. Canvas chart mobile */
+    .gold-chart-wrap .sv-shared-canvas-wrap {
+        min-height: 220px !important;
+        height: 220px !important;
+    }
+
+    /* 10. Brand tabs trên chart: wrap xuống dòng */
+    .gold-chart-wrap .sv-chart-brand-tabs {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    .gold-chart-brand {
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+    }
+
+    /* 11. Period tabs nhỏ lại */
+    .gold-prd {
+        padding: 3px 8px !important;
+        font-size: 11px !important;
+    }
+
+    /* 12. Header chart bar flex-wrap */
+    .gold-chart-wrap .sv-shared-chart-bar {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        padding: 10px 12px !important;
+    }
+
+    /* 13. Unit tabs + label */
+    .gold-chart-wrap .sv-chart-unit-tabs { flex-wrap: wrap; }
+    .gold-chart-unit-btn { padding: 3px 8px !important; font-size: 10px !important; }
+    .sv-chart-unit-label, #gold-chart-unit-lbl { font-size: 10px !important; }
+
+    /* 14. Brand dot mobile  */
+    .gold-brand-dot {
+        width: 8px !important;
+        height: 8px !important;
+    }
+}
+
+    /* Chart click overlay */
+    .chart-click-overlay {
+      position: absolute; inset: 0; z-index: 10;
+      background: transparent; display: block; cursor: pointer;
+    }
+    .wc-widget-wrap:hover .chart-click-overlay {
+      background: rgba(255,255,255,0.02);
+    }

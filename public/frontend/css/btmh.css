@@ -1,0 +1,298 @@
+/* ══════════════════════════════════════════════════════════
+   Bảo Tín Mạnh Hải – Gold Price Section Styles
+   Thiết kế lấy cảm hứng từ baotinmanhhai.vn
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Section Wrapper ───────────────────────────────────── */
+.btmh-gold-section {
+  margin: 0 0 2rem 0;
+  padding: 1.5rem 0;
+}
+
+/* ── Main Layout (split: bảng | chart) ────────────────── */
+.btmh-main-layout {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ── Price Card ───────────────────────────────────────── */
+.btmh-price-card {
+  background: linear-gradient(135deg, rgba(17,24,39,0.95) 0%, rgba(31,20,20,0.9) 100%);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(220,38,38,0.12), 0 2px 8px rgba(0,0,0,0.4);
+  transition: box-shadow 0.3s;
+}
+
+.btmh-price-card:hover {
+  box-shadow: 0 12px 40px rgba(220,38,38,0.2), 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* ── Card Header ──────────────────────────────────────── */
+.btmh-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(220,38,38,0.2) 0%, rgba(153,27,27,0.15) 100%);
+  border-bottom: 1px solid rgba(220,38,38,0.2);
+}
+
+.btmh-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.75rem;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(220,38,38,0.4);
+}
+
+.btmh-card-info {
+  flex: 1;
+}
+
+.btmh-card-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #f1f5f9;
+}
+
+.btmh-card-updated {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.btmh-source-link {
+  font-size: 0.72rem;
+  color: #dc2626;
+  text-decoration: none;
+  border: 1px solid rgba(220,38,38,0.4);
+  border-radius: 6px;
+  padding: 3px 8px;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.btmh-source-link:hover {
+  background: rgba(220,38,38,0.15);
+}
+
+/* ── Table ────────────────────────────────────────────── */
+.btmh-table-wrap {
+  padding: 0.75rem 1rem 1rem;
+}
+
+.btmh-price-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.btmh-price-table thead tr {
+  background: linear-gradient(90deg, #dc2626, #b91c1c);
+}
+
+.btmh-price-table thead th {
+  color: #fff;
+  font-weight: 700;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.btmh-price-table thead th.text-buy,
+.btmh-price-table thead th.text-sell {
+  text-align: right;
+}
+
+.btmh-price-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.15s;
+}
+
+.btmh-price-table tbody tr:hover {
+  background: rgba(220,38,38,0.08);
+}
+
+.btmh-price-table tbody td {
+  padding: 0.75rem 0.75rem;
+  color: #cbd5e1;
+  vertical-align: middle;
+}
+
+.btmh-price-table tbody td:first-child {
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+.btmh-price-table td.text-buy {
+  text-align: right;
+  color: #22c55e;
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.btmh-price-table td.text-sell {
+  text-align: right;
+  color: #ef4444;
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Table Footer ─────────────────────────────────────── */
+.btmh-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.25rem 0;
+  font-size: 0.72rem;
+  color: #64748b;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 0.25rem;
+}
+
+.btmh-spread-wrap strong {
+  color: #f59e0b;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Chart Wrap ───────────────────────────────────────── */
+.btmh-chart-wrap {
+  background: rgba(15,23,42,0.7);
+  border: 1px solid rgba(220,38,38,0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.btmh-chart-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: linear-gradient(90deg, rgba(220,38,38,0.08) 0%, transparent 100%);
+}
+
+.btmh-chart-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #e2e8f0;
+}
+
+/* ── Period Buttons ───────────────────────────────────── */
+.btmh-period-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.btmh-prd {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #94a3b8;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btmh-prd:hover {
+  background: rgba(220,38,38,0.15);
+  border-color: rgba(220,38,38,0.4);
+  color: #fca5a5;
+}
+
+.btmh-prd.active {
+  background: rgba(220,38,38,0.25);
+  border-color: #dc2626;
+  color: #fff;
+}
+
+/* ── Canvas Wrap ──────────────────────────────────────── */
+.btmh-canvas-wrap {
+  position: relative;
+  height: 280px;
+  padding: 0.75rem 1rem;
+}
+
+.btmh-canvas-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ── Legend ───────────────────────────────────────────── */
+.btmh-chart-legend {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.5rem 1.25rem 0.75rem;
+  justify-content: center;
+}
+
+.btmh-legend-item {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.btmh-legend-buy { color: #22c55e; }
+.btmh-legend-sell { color: #ef4444; }
+
+/* ── Price Update Animation ───────────────────────────── */
+@keyframes btmhPriceFlash {
+  0%   { background: rgba(220,38,38,0.25); }
+  100% { background: transparent; }
+}
+
+.btmh-price-flash {
+  animation: btmhPriceFlash 0.6s ease-out;
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .btmh-main-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .btmh-card-header {
+    flex-wrap: wrap;
+  }
+
+  .btmh-canvas-wrap {
+    height: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .btmh-chart-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btmh-period-tabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .btmh-prd {
+    flex: 1;
+    text-align: center;
+  }
+}

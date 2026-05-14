@@ -1,0 +1,50 @@
+<?php
+
+return [
+    'create_success' => 'Tạo mới thành công',
+    'create_failed' => 'Tạo mới thất bại',
+
+    'update_success' => 'Cập nhật thành công',
+    'update_failed' => 'Cập nhật thất bại',
+
+    'delete_success' => 'Xóa thành công',
+    'delete_failed' => 'Xóa thất bại',
+
+    'system_error' => 'Lỗi hệ thống',
+    'success' => 'Thành công',
+    'refresh_token_success' => 'Refresh token thành công',
+    'refresh_token_fail' => 'Refresh token thất bại',
+    'not_success' => 'Không thành công',
+    'login_failed' => 'Tài khoản không tồn tại',
+    'account_not_found' => 'Tài khoản không được tìm thấy',
+    'access_email' => 'Chúng tôi đã gửi cho bạn một liên kết để khôi phục mật khẩu của bạn tới: :email. Xin vui lòng kiểm tra email của bạn.',
+    'update_password_success' => 'Mật khẩu đã được cập nhật',
+    'confirm_active_email' => 'Thành công. Bạn vui lòng kiểm tra email để hoàn thành việc đăng kí',
+    'active_account_success' => 'Tài khoản của bạn đã được kích hoạt. Vui lòng đăng nhập.',
+    'email_invalid' => 'Địa chỉ email không hợp lệ',
+    'test_send_mail_success' => 'Thành công, bạn lòng kiểm tra email',
+    'setting_send_mail_error' => 'Thất bại. Lỗi cấu hình gửi mail',
+
+    'validate_error' => 'Lỗi validate',
+    'register_success' => 'Đăng kí thành công',
+    'login_success' => 'Đăng nhập thành công',
+    'unauthorized' => 'Không được phép',
+    'logged_out' => 'Đăng xuất',
+    'logged_success' => 'Đã đăng xuất',
+    'email_not_exist' => 'Email không tồn tại',
+    'password_wrong' => 'Sai mật khẩu',
+    'user_not_exits' => 'User không tồn tại',
+    'link_invalid' => 'Link không đúng hoặc đã hết hạn',
+    // auth
+    'send_mail_forgot_password' => 'Yêu cầu khôi phục mật khẩu',
+    'send_mail_forgot_password_success' => 'Quên mật khẩu thành công',
+    'max_reset_password' => 'Bạn không thể đặt lại mật khẩu của mình hơn :per_day lần một ngày',
+    'wait_reset_password' => 'Bạn phải đợi :time phút để đặt lại mật khẩu lần sau',
+    'link_valid' => 'Link hợp lệ',
+    'not_found' => 'Không tồn tại',
+    'item_not_found' => ':item không tồn tại',
+    'confirm_delete' => 'Xóa. Bạn có chắc chắn không?',
+    'comment_not_found' => 'Comment không tồn tại',
+    'order_donation_success' => 'Cảm ơn bạn đã ủng hộ. Bạn có thể vào lịch sử đơn hàng để kiểm tra thông tin ủng hộ nhé',
+    'order_virtual_gift_success' => 'Cảm ơn bạn đã gửi quà tặng. Bạn có thể vào lịch sử đơn hàng để kiểm tra thông tin ủng hộ nhé',
+];

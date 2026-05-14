@@ -1,0 +1,22 @@
+.parent-item.is-open .toggle-icon { transform: rotate(90deg); display:inline-block; }
+.parent-item .toggle-icon { transition: transform .15s ease; }
+.parent-item .parent-row:hover { background: #f8f9fa; }
+.cat-table { border: 1px solid #dee2e6; border-radius: 4px; overflow: hidden; }
+.cat-row { display: flex; align-items: center; border-top: 1px solid #dee2e6; background: #fff; }
+.cat-row:first-child { border-top: 0; }
+.cat-head { background: #f8f9fa; font-weight: 600; }
+.cat-col { padding: 10px 12px; }
+.cat-col.id { width: 60px; }
+.cat-col.sort { width: 80px; }
+.cat-col.name { flex: 1; }
+.cat-col.act { width: 180px; }
+
+.parent-item { border-top: 1px solid #dee2e6; }
+.parent-item:first-child { border-top: 0; }
+
+.child-row { background: #fafafa; }
+.child-list { border-top: 1px solid #dee2e6; }
+
+/* khi kéo */
+.sortable-ghost { opacity: .4; }
+.sortable-chosen { background: #fff3cd; }

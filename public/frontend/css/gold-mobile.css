@@ -1,0 +1,213 @@
+/* ══════════════════════════════════════════════════════════════
+   GOLD SECTION – MOBILE RESPONSIVE
+   Fix: bảng không scroll ngang, chart hiện bên dưới trên mobile
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── DESKTOP (≥768px): bảng trái + chart phải ────────────────── */
+@media (min-width: 768px) {
+    .gold-table-chart-layout {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch;
+        gap: 0;
+    }
+    .gold-price-table-wrap {
+        flex: 0 0 55%;
+        max-width: 55%;
+        border-right: 1px solid rgba(245,197,24,0.15);
+    }
+    .gold-chart-wrap {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex !important;
+        flex-direction: column;
+    }
+}
+
+/* ── MOBILE (<768px): bảng trên, chart dưới ──────────────────── */
+@media (max-width: 767px) {
+
+    /* 1. Layout: xếp chồng dọc — KHÔNG dùng flex để tránh height bị
+       bóp bởi parent. Dùng block thay thế. */
+    .gold-table-chart-layout {
+        display: block !important;
+        width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    /* 2. Bảng giá: full width, không scroll ngang */
+    .gold-price-table-wrap {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(245,197,24,0.15) !important;
+    }
+
+    /* 3. Ẩn cột spread để bảng vừa màn hình */
+    .gold-price-table th.col-spread,
+    .gold-price-table td.col-spread {
+        display: none !important;
+    }
+
+    /* 4. Thu gọn padding bảng */
+    .gold-price-table thead th,
+    .gold-price-table td {
+        padding: 8px 8px !important;
+    }
+
+    /* 5. Số giá mua/bán */
+    .gold-price-val {
+        font-size: 12px !important;
+        white-space: nowrap !important;
+    }
+
+    /* 6. Tên thương hiệu */
+    .gold-brand-name {
+        font-size: 11px !important;
+        line-height: 1.3 !important;
+    }
+    .gold-brand-dot {
+        width: 8px !important;
+        height: 8px !important;
+    }
+
+    /* 7. Loại vàng */
+    .gold-type-label {
+        font-size: 12px !important;
+    }
+    .gold-type-sub {
+        font-size: 10px !important;
+    }
+
+    /* 8. HIỆN CHART bên dưới bảng – fix height collapse
+       Dùng block + explicit height thay vì flex growth */
+    .gold-chart-wrap {
+        display: block !important;
+        width: 100% !important;
+        min-height: 320px !important;
+        height: auto !important;
+        border-left: 1px solid rgba(245,197,24,0.2) !important;
+        border-right: 1px solid rgba(245,197,24,0.2) !important;
+        border-radius: 0 0 12px 12px !important;
+        /* Reset flex properties từ desktop */
+        flex: none !important;
+    }
+
+    /* 9. Chart bar: controls bên trên */
+    .gold-chart-wrap .sv-shared-chart-bar {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        padding: 10px 12px !important;
+    }
+
+    /* 10. Canvas wrap: phải có chiều cao thực */
+    .gold-chart-wrap .sv-shared-canvas-wrap {
+        display: block !important;
+        width: 100% !important;
+        min-height: 220px !important;
+        height: 220px !important;
+        position: relative;
+    }
+
+    /* 11. canvas tag */
+    #goldSharedChart {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* 12. Brand tabs: nhỏ lại, wrap */
+    .gold-chart-wrap .sv-chart-brand-tabs {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    .gold-chart-brand {
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+    }
+
+    /* 13. Period tabs */
+    .gold-prd {
+        padding: 3px 7px !important;
+        font-size: 11px !important;
+    }
+
+    /* 14. Unit tabs + label */
+    #gold-chart-unit-tabs {
+        display: flex !important;
+        flex-wrap: wrap !important;
+    }
+    .gold-chart-unit-btn {
+        padding: 3px 8px !important;
+        font-size: 10px !important;
+    }
+    #gold-chart-unit-lbl {
+        font-size: 10px !important;
+    }
+
+    /* 15. Footnote */
+    .gold-chart-wrap .sv-footnote {
+        font-size: 10px !important;
+        padding: 6px 12px !important;
+    }
+}
+
+/* ═══════════════════════════
+   CONTACT SECTION – Mobile padding fix
+   ═════════════════════════════ */
+@media (max-width: 767px) {
+    .cs-info {
+        padding: 16px 16px 16px 16px !important;
+    }
+}
+
+/* ═══════════════════════════
+   GOLD TABLE – Fix tràn cột Bán ra trên màn nhỏ (≤414px)
+   ═════════════════════════════════════════════════════════════ */
+@media (max-width: 414px) {
+
+    /* Badge THẤP NHẤT / CAO NHẤT: xuống dòng dưới giá, không inline */
+    .gold-badge {
+        display: block !important;
+        margin: 3px 0 0 0 !important;
+        width: fit-content !important;
+        font-size: 9px !important;
+        padding: 1px 5px !important;
+    }
+
+    /* Giá bán: co font nhỏ hơn chút */
+    .gold-price-val {
+        font-size: 11.5px !important;
+    }
+
+    /* Cột mua/bán padding nhỏ hơn */
+    .gold-price-table td.col-buy,
+    .gold-price-table td.col-sell,
+    .gold-price-table th.col-buy,
+    .gold-price-table th.col-sell {
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+    }
+
+    /* Cột TH thương hiệu nhỏ lại */
+    .gold-price-table td.col-brand,
+    .gold-price-table th.col-brand {
+        padding-left: 8px !important;
+        padding-right: 4px !important;
+    }
+
+    /* Cột loại vàng */
+    .gold-price-table td.col-type,
+    .gold-price-table th.col-type {
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+    }
+
+    /* Header text nhỏ hơn */
+    .gold-price-table thead th {
+        font-size: 10px !important;
+    }
+}

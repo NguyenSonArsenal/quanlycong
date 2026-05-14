@@ -1,0 +1,176 @@
+/* ============================================
+   PRODUCT VARIANTS STYLES
+   ============================================ */
+
+.variants-section {
+    background: #fff;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.variants-section h5 {
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.variants-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.variant-item {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.variant-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-color: #5d87ff;
+}
+
+.variant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.variant-title {
+    font-weight: 600;
+    color: #5d87ff;
+    font-size: 16px;
+}
+
+.variant-remove-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.3s;
+}
+
+.variant-remove-btn:hover {
+    background: #c82333;
+}
+
+.variant-fields {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.variant-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.variant-field label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.variant-field label.required::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.variant-field input,
+.variant-field select {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.variant-field input:focus,
+.variant-field select:focus {
+    outline: none;
+    border-color: #5d87ff;
+    box-shadow: 0 0 0 0.2rem rgba(93, 135, 255, 0.25);
+}
+
+.variant-field input[readonly] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+.variant-field-full {
+    grid-column: 1 / -1;
+}
+
+.variant-status-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.variant-status-group label {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.add-variant-btn {
+    background: #5d87ff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+    margin-top: 15px;
+}
+
+.add-variant-btn:hover {
+    background: #4570ea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(93, 135, 255, 0.3);
+}
+
+.add-variant-btn i {
+    font-size: 16px;
+}
+
+.no-variants-message {
+    text-align: center;
+    padding: 30px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .variant-fields {
+        grid-template-columns: 1fr;
+    }
+    
+    .variant-field-full {
+        grid-column: 1;
+    }
+}

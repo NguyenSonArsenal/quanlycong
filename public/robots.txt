@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /dk-log
+Disallow: /dk-stats
+
+Sitemap: https://giavangbac.io.vn/sitemap.xml
