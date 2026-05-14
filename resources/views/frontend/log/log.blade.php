@@ -7,7 +7,7 @@
             $ext = $parts[1] ?? '';
         @endphp
         <li>
-            <a href="{{ route('dk-log.show', ['filename' => $filename, 'ext' => $ext]) }}">
+            <a href="{{ route('fe.dk-log.show', ['filename' => $filename, 'ext' => $ext]) }}">
                 {{ $file }}
             </a>
         </li>
