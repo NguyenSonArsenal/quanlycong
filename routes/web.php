@@ -4,26 +4,45 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\KpiController;
+use App\Http\Controllers\DailyWorkController;
+use App\Http\Controllers\PayrollController;
 
 Route::get('/', function () { return redirect('/staff-shift-kpi/login'); });
 
 Route::get('dk-log', [Controller::class, 'listFileLog']);
 Route::get('dk-log/{filename}/{ext}', [Controller::class, 'showFileLog'])->name('dk-log.show');
 
-// Cụm Auth
 Route::prefix('staff-shift-kpi')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Các trang cần login mới vào được
     Route::middleware('auth')->group(function () {
-        Route::get('/daily', function() { return view('dashboard'); });
+        // Daily Work  (RouteServiceProvider tự thêm "fe." → fe.daily.index, ...)
+        Route::get('/daily', [DailyWorkController::class, 'index'])->name('daily.index');
+        Route::post('/daily/update', [DailyWorkController::class, 'updateField'])->name('daily.update');
+        Route::post('/daily/equalize', [DailyWorkController::class, 'equalize'])->name('daily.equalize');
+        Route::post('/daily/lock', [DailyWorkController::class, 'lock'])->name('daily.lock');
 
-        // Quản lý Cửa hàng
-        Route::resource('stores', StoreController::class)->only(['index', 'store', 'destroy']);
+        // Payroll
+        Route::get('/payrolls', [PayrollController::class, 'index'])->name('payrolls.index');
 
-        // Quản lý Nhân sự
-        Route::resource('users', UserController::class)->only(['index', 'store', 'destroy']);
+        // Stores
+        Route::get('/stores', [StoreController::class, 'index'])->name('stores.index');
+        Route::post('/stores', [StoreController::class, 'store'])->name('stores.store');
+        Route::delete('/stores/{store}', [StoreController::class, 'destroy'])->name('stores.destroy');
+
+        // Users
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+        // KPI Config
+        Route::get('/kpi-config', [KpiController::class, 'index'])->name('kpi-config.index');
+        Route::post('/kpi-config', [KpiController::class, 'store'])->name('kpi-config.store');
+        Route::get('/kpi-config/{id}', [KpiController::class, 'show'])->name('kpi-config.show');
+        Route::post('/kpi-config/{id}/matrix', [KpiController::class, 'updateMatrix'])->name('kpi-config.update-matrix');
+        Route::post('/kpi-config/{id}/regenerate', [KpiController::class, 'regenerate'])->name('kpi-config.regenerate');
     });
 });

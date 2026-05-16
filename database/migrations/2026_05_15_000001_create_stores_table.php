@@ -11,6 +11,7 @@ class CreateStoresTable extends Migration {
             $table->id();
             $table->string('name');
             $table->string('code')->unique();
+            $table->string('address')->nullable();
             $table->string('area_id')->nullable();
             $table->timestamps();
             $table->softDeletes();

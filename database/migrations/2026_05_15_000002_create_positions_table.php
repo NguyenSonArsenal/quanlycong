@@ -10,7 +10,7 @@ class CreatePositionsTable extends Migration {
             $table->id();
             $table->string('name');
             $table->string('code')->unique();
-            $table->boolean('is_sales')->default(false);
+            $table->boolean('is_sales')->default(true);
             $table->decimal('team_bonus_base', 15, 2)->default(0);
             $table->timestamps();
             $table->softDeletes();

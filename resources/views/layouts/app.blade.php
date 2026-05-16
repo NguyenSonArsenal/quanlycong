@@ -6,7 +6,10 @@
     <title>@yield('title') - KRIK System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; }</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .table-compact th, .table-compact td { padding: 0.4rem 0.75rem !important; }
+    </style>
 </head>
 <body class="bg-slate-50">
     <div class="flex h-screen">
@@ -16,8 +19,8 @@
                 KRIK SYSTEM
             </div>
             <nav class="flex-1 p-4 space-y-2">
-                <a href="{{ url('/staff-shift-kpi/daily') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/daily') ? 'bg-slate-800 text-rose-500' : '' }}">
-                    Dashboard
+                <a href="{{ route('fe.daily.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/daily*') ? 'bg-slate-800 text-rose-500' : '' }}">
+                    Bảng công ngày
                 </a>
                 <div class="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Danh mục</div>
                 <a href="{{ route('fe.stores.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/stores*') ? 'bg-slate-800 text-rose-500' : '' }}">
@@ -28,10 +31,10 @@
                 </a>
                 
                 <div class="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nghiệp vụ</div>
-                <a href="#" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors text-slate-400 cursor-not-allowed">
+                <a href="{{ route('fe.kpi-config.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/kpi-config*') ? 'bg-slate-800 text-rose-500' : '' }}">
                     Cấu hình KPI
                 </a>
-                <a href="#" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors text-slate-400 cursor-not-allowed">
+                <a href="{{ route('fe.payrolls.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/payrolls*') ? 'bg-slate-800 text-rose-500' : '' }}">
                     Bảng lương
                 </a>
             </nav>

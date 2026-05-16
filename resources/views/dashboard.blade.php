@@ -23,7 +23,8 @@
     <p class="text-slate-500 leading-relaxed">
         Hệ thống đã sẵn sàng. Anh có thể bắt đầu bằng việc kiểm tra danh sách 
         <a href="{{ route('fe.stores.index') }}" class="text-rose-500 font-medium hover:underline">Cửa hàng</a> 
-        và <a href="{{ route('fe.users.index') }}" class="text-rose-500 font-medium hover:underline">Nhân sự</a> ở menu bên trái.
+        và <a href="{{ route('fe.users.index') }}" class="text-rose-500 font-medium hover:underline">Nhân sự</a> ở menu bên trái. 
+        Đừng quên <a href="{{ route('fe.kpi-config.index') }}" class="text-rose-500 font-medium hover:underline">Cấu hình KPI</a> nhé!
     </p>
 </div>
 @endsection

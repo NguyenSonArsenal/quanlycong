@@ -10,39 +10,59 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['store', 'position'])->orderBy('full_name')->get();
+        $query = User::with(['store', 'position']);
+
+        // Áp dụng bộ lọc
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function($sub) use ($q) {
+                $sub->where('full_name', 'like', "%$q%")
+                    ->orWhere('username', 'like', "%$q%");
+            });
+        }
+
+        if ($request->filled('store_id')) {
+            $query->where('store_id', $request->store_id);
+        }
+
+        if ($request->filled('position_id')) {
+            $query->where('position_id', $request->position_id);
+        }
+
+        $users = $query->orderBy('created_at', 'desc')->get();
         $stores = Store::orderBy('code')->get();
         $positions = Position::orderBy('name')->get();
-        
+
         return view('users.index', compact('users', 'stores', 'positions'));
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $request->validate([
             'username' => 'required|unique:users',
+            'password' => 'required|min:4',
             'full_name' => 'required',
-            'password' => 'required|min:6',
-            'role' => 'required',
-            'store_id' => 'nullable|exists:stores,id',
-            'position_id' => 'nullable|exists:positions,id',
-            'contract_type' => 'nullable',
-            'hourly_rate' => 'nullable|numeric',
+            'role' => 'required'
         ]);
 
-        $data['password'] = Hash::make($data['password']);
-        
-        User::create($data);
-        return back()->with('success', 'Đã thêm nhân sự mới!');
+        User::create([
+            'username' => $request->username,
+            'password' => Hash::make($request->password),
+            'full_name' => $request->full_name,
+            'role' => $request->role,
+            'store_id' => $request->store_id,
+            'position_id' => $request->position_id,
+            'salary_per_hour' => $request->salary_per_hour ?? 0,
+            'contract_type' => $request->contract_type ?? 'CT',
+        ]);
+
+        return back()->with('success', 'Thêm nhân sự thành công!');
     }
 
     public function destroy(User $user)
     {
-        if ($user->id === auth()->id()) {
-            return back()->withErrors(['error' => 'Không thể tự xóa chính mình!']);
-        }
         $user->delete();
         return back()->with('success', 'Đã xóa nhân sự!');
     }
