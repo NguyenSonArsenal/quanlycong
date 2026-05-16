@@ -19,11 +19,12 @@ Route::prefix('staff-shift-kpi')->group(function () {
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::middleware('auth')->group(function () {
-        // Daily Work  (RouteServiceProvider tự thêm "fe." → fe.daily.index, ...)
+        // Daily Work
         Route::get('/daily', [DailyWorkController::class, 'index'])->name('daily.index');
         Route::post('/daily/update', [DailyWorkController::class, 'updateField'])->name('daily.update');
         Route::post('/daily/equalize', [DailyWorkController::class, 'equalize'])->name('daily.equalize');
         Route::post('/daily/lock', [DailyWorkController::class, 'lock'])->name('daily.lock');
+        Route::delete('/daily/records/{userId}', [DailyWorkController::class, 'deleteRecord'])->name('daily.delete');
 
         // Payroll
         Route::get('/payrolls', [PayrollController::class, 'index'])->name('payrolls.index');
@@ -36,6 +37,7 @@ Route::prefix('staff-shift-kpi')->group(function () {
         // Users
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
         // KPI Config

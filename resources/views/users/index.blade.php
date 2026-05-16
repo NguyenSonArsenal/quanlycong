@@ -54,8 +54,8 @@
             </select>
         </div>
         <div>
-            <label class="block text-xs font-medium text-slate-500 mb-1">Lương/giờ</label>
-            <input type="number" name="salary_per_hour" class="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none" value="25000">
+            <label class="block text-xs font-medium text-slate-500 mb-1">Lương/giờ (đ)</label>
+            <input type="number" name="hourly_rate" class="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none" value="25000" min="0">
         </div>
         <div class="md:col-span-4 text-right">
             <button type="submit" class="bg-slate-900 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-black transition-all shadow-lg shadow-slate-200 mt-2">
@@ -117,8 +117,14 @@
                     <div class="text-[11px] text-slate-700 font-medium">{{ $user->position->name ?? '---' }}</div>
                     <span class="text-[8px] px-1 py-0.5 rounded bg-slate-100 text-slate-500 font-bold uppercase">{{ $user->role }}</span>
                 </td>
-                <td class=" font-mono text-slate-600 text-xs">
-                    {{ number_format($user->salary_per_hour, 0, ',', '.') }}đ
+                <td class="font-mono text-slate-600 text-xs">
+                    <form action="{{ route('fe.users.update', $user->id) }}" method="POST" class="flex items-center gap-1">
+                        @csrf @method('PATCH')
+                        <input type="number" name="hourly_rate" value="{{ $user->hourly_rate }}"
+                            class="w-24 px-2 py-1 rounded border border-slate-200 outline-none text-xs font-mono focus:border-blue-300"
+                            min="0">
+                        <button type="submit" class="text-[9px] text-blue-500 hover:text-blue-700 font-bold">Lưu</button>
+                    </form>
                 </td>
                 <td class=" text-right">
                     <form action="{{ route('fe.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Xóa nhân sự này?')">

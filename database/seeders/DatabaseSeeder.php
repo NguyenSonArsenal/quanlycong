@@ -31,25 +31,26 @@ class DatabaseSeeder extends Seeder
 
         // Seed Commission Brackets (Bảng 5.3)
         $brackets = [
-            // NVBH_FT
-            ['pos' => 'NVBH_FT', 'min' => 90, 'max' => 100, 'rate' => 2.2],
-            ['pos' => 'NVBH_FT', 'min' => 100, 'max' => 110, 'rate' => 2.5],
-            ['pos' => 'NVBH_FT', 'min' => 110, 'max' => 120, 'rate' => 2.8],
-            ['pos' => 'NVBH_FT', 'min' => 120, 'max' => null, 'rate' => 3.2],
-            // NVBH_PT
-            ['pos' => 'NVBH_PT', 'min' => 90, 'max' => 100, 'rate' => 0.6],
-            ['pos' => 'NVBH_PT', 'min' => 100, 'max' => 110, 'rate' => 0.8],
-            ['pos' => 'NVBH_PT', 'min' => 110, 'max' => 120, 'rate' => 1.0],
-            ['pos' => 'NVBH_PT', 'min' => 120, 'max' => null, 'rate' => 1.2],
+            // NVBH_FT — Full-time, HĐ=CT. Spec 5.3: <90%=0% (no row), 90%+ mới có rate
+            ['pos' => 'NVBH_FT', 'ct' => 'CT', 'min' =>  90, 'max' => 100,  'rate' => 2.2],
+            ['pos' => 'NVBH_FT', 'ct' => 'CT', 'min' => 100, 'max' => 110,  'rate' => 2.5],
+            ['pos' => 'NVBH_FT', 'ct' => 'CT', 'min' => 110, 'max' => 120,  'rate' => 2.8],
+            ['pos' => 'NVBH_FT', 'ct' => 'CT', 'min' => 120, 'max' => null, 'rate' => 3.2],
+            // NVBH_PT — Part-time, HĐ=TV. Spec 5.3: <90%=0%
+            ['pos' => 'NVBH_PT', 'ct' => 'TV', 'min' =>  90, 'max' => 100,  'rate' => 0.6],
+            ['pos' => 'NVBH_PT', 'ct' => 'TV', 'min' => 100, 'max' => 110,  'rate' => 0.8],
+            ['pos' => 'NVBH_PT', 'ct' => 'TV', 'min' => 110, 'max' => 120,  'rate' => 1.0],
+            ['pos' => 'NVBH_PT', 'ct' => 'TV', 'min' => 120, 'max' => null, 'rate' => 1.2],
         ];
 
         foreach ($brackets as $b) {
             \DB::table('commission_brackets')->insert([
-                'position_code' => $b['pos'],
-                'min_kpi' => $b['min'],
-                'max_kpi' => $b['max'],
+                'position_code'   => $b['pos'],
+                'contract_type'   => $b['ct'],
+                'min_kpi'         => $b['min'],
+                'max_kpi'         => $b['max'],
                 'commission_rate' => $b['rate'],
-                'effective_from' => '2026-01-01',
+                'effective_from'  => '2026-01-01',
             ]);
         }
 
@@ -75,14 +76,26 @@ class DatabaseSeeder extends Seeder
                 ['username' => 'bv1', 'name' => 'Bảo Vệ 1', 'pos' => 'NVBV', 'role' => 'staff'],
             ];
 
+            // hourly_rate theo chức vụ
+            $hourlyRates = [
+                'QLCH' => 0, 'CHP' => 50000, 'NVBH_FT' => 35000,
+                'NVBH_PT' => 25000, 'NVTN' => 30000, 'NVK' => 28000, 'NVBV' => 25000,
+            ];
+            // Hợp đồng: NVBH_PT = TV, còn lại = CT
+            $contractTypes = [
+                'NVBH_PT' => 'TV',
+            ];
+
             foreach ($staffStructure as $staff) {
                 User::create([
-                    'username' => strtolower($store->code) . '_' . $staff['username'],
-                    'password' => Hash::make('password'),
-                    'full_name' => $staff['name'] . ' - ' . $store->code,
-                    'role' => $staff['role'],
-                    'store_id' => $store->id,
-                    'position_id' => $posMap[$staff['pos']],
+                    'username'      => strtolower($store->code) . '_' . $staff['username'],
+                    'password'      => Hash::make('password'),
+                    'full_name'     => $staff['name'] . ' - ' . $store->code,
+                    'role'          => $staff['role'],
+                    'store_id'      => $store->id,
+                    'position_id'   => $posMap[$staff['pos']],
+                    'hourly_rate'   => $hourlyRates[$staff['pos']] ?? 0,
+                    'contract_type' => $contractTypes[$staff['pos']] ?? 'CT',
                 ]);
             }
         }

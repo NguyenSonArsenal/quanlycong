@@ -1,161 +1,575 @@
 @extends('layouts.app')
+@section('title', 'Nhập công ' . \Carbon\Carbon::parse($date)->format('d/m/Y') . ' - KRIK')
 
-@section('title', 'Báo cáo Nhân sự & KPI - KRIK')
+@php
+    $isManager  = in_array(auth()->user()->role, ['admin', 'store_manager', 'hr']);
+    $kpiTarget  = $dailyTarget ? (float)($dailyTarget->rebalanced_target ?: $dailyTarget->target_amount) : 0;
+    $storeRev   = $totals['store_revenue'] ?? 0;
+    $kpiStorePct= $kpiTarget > 0 ? round($storeRev / $kpiTarget * 100, 1) : 0;
+    $dayLabel   = \Carbon\Carbon::parse($date)->locale('vi')->isoFormat('dddd, DD/MM/YYYY');
+    $isWeekend  = \Carbon\Carbon::parse($date)->isoWeekday() >= 6;
+@endphp
 
 @section('content')
-<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <!-- Bộ lọc -->
-        <div class="md:col-span-1 space-y-4">
-            <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Ngày báo cáo</label>
-                <input type="date" name="date" class="w-full px-4 py-2 rounded-lg border-2 border-slate-100 outline-none font-bold text-slate-700" value="{{ $date }}" onchange="window.location.href='?date='+this.value+'&store_id={{ $storeId }}'">
-            </div>
-            <div>
-                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Cửa hàng</label>
-                <select name="store_id" class="w-full px-4 py-2 rounded-lg border-2 border-slate-100 outline-none font-bold text-slate-700" onchange="window.location.href='?date={{ $date }}&store_id='+this.value">
-                    <option value="">-- Chọn cửa hàng --</option>
-                    @foreach($stores as $s)
-                        <option value="{{ $s->id }}" {{ $storeId == $s->id ? 'selected' : '' }}>{{ $s->code }} - {{ $s->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+{{-- ═══ HEADER BAR ═══ --}}
+<div class="bg-white rounded-2xl shadow-sm border border-slate-100 mb-5 overflow-hidden">
+    {{-- Top controls --}}
+    <div class="flex flex-wrap items-center gap-3 px-5 py-4 border-b border-slate-100">
+        <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+            <input type="date" id="picker_date" value="{{ $date }}"
+                class="px-3 py-2 rounded-lg border-2 border-slate-100 outline-none font-bold text-slate-700 text-sm focus:border-blue-300"
+                onchange="navigate()">
+            <select id="picker_store"
+                class="px-3 py-2 rounded-lg border-2 border-slate-100 outline-none font-bold text-slate-700 text-sm focus:border-blue-300"
+                onchange="navigate()">
+                <option value="">-- Chọn cửa hàng --</option>
+                @foreach($stores as $s)
+                    <option value="{{ $s->id }}" {{ $storeId == $s->id ? 'selected' : '' }}>{{ $s->code }} – {{ $s->name }}</option>
+                @endforeach
+            </select>
         </div>
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ $dayLabel }} {{ $isWeekend ? '🏖' : '' }}</p>
+        @if($isLocked)
+            <span class="px-3 py-1.5 bg-rose-100 text-rose-600 rounded-full text-xs font-black">🔒 Đã khóa ngày</span>
+        @endif
+    </div>
 
-        <!-- Chỉ số tổng (Giống trên cùng của Sheet) -->
-        <div class="md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
-                <p class="text-[9px] font-bold text-emerald-600 uppercase">Tổng Doanh Thu CH</p>
-                <input type="number" id="total_revenue_input" class="w-full bg-transparent border-none p-0 text-lg font-black text-emerald-700 outline-none" onblur="equalizeKPI()" placeholder="0">
+    {{-- Stats row --}}
+    @if($storeId)
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-0 divide-x divide-slate-100">
+        {{-- KPI target ngày --}}
+        <div class="px-5 py-4">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">KPI Ngày / Target</p>
+            <div class="text-sm font-black {{ $kpiStorePct >= 100 ? 'text-emerald-600' : ($kpiStorePct >= 80 ? 'text-amber-500' : 'text-rose-500') }}">
+                <span id="stat-kpi-pct">{{ $kpiStorePct }}</span>%
             </div>
-            <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                <p class="text-[9px] font-bold text-blue-600 uppercase">Số lượng khách</p>
-                <div class="text-lg font-black text-blue-700">{{ $users->sum(fn($u) => $u->shifts instanceof \Illuminate\Support\Collection ? $u->shifts->sum('customers') : 0) }}</div>
-            </div>
-            <div class="bg-amber-50 p-3 rounded-xl border border-amber-100">
-                <p class="text-[9px] font-bold text-amber-600 uppercase">Số hóa đơn</p>
-                <div class="text-lg font-black text-amber-700">{{ $users->sum(fn($u) => $u->shifts instanceof \Illuminate\Support\Collection ? $u->shifts->sum('orders') : 0) }}</div>
-            </div>
-            <div class="bg-purple-50 p-3 rounded-xl border border-purple-100">
-                <p class="text-[9px] font-bold text-purple-600 uppercase">Số lượng sản phẩm</p>
-                <div class="text-lg font-black text-purple-700">{{ $users->sum(fn($u) => $u->shifts instanceof \Illuminate\Support\Collection ? $u->shifts->sum('products') : 0) }}</div>
-            </div>
+            <div class="text-[9px] text-slate-400 mt-0.5">Target: {{ number_format($kpiTarget/1e6, 1) }}M</div>
+        </div>
+        {{-- Tổng DT cửa hàng --}}
+        <div class="px-5 py-4">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Tổng DT hôm nay</p>
+            <div class="text-sm font-black text-emerald-700" id="stat-store-rev">{{ number_format($storeRev, 0, ',', '.') }}</div>
+            <div class="text-[9px] text-slate-400 mt-0.5">Tổng DT cá nhân NV</div>
+        </div>
+        <div class="px-5 py-4">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Khách hàng</p>
+            <div class="text-lg font-black text-blue-700" id="stat-customers">{{ $totals['customers'] ?? 0 }}</div>
+        </div>
+        <div class="px-5 py-4">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Số hóa đơn</p>
+            <div class="text-lg font-black text-amber-600" id="stat-orders">{{ $totals['orders'] ?? 0 }}</div>
+        </div>
+        <div class="px-5 py-4">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Sản phẩm</p>
+            <div class="text-lg font-black text-purple-600" id="stat-products">{{ $totals['products'] ?? 0 }}</div>
         </div>
     </div>
+
+    {{-- Action bar (QLCH only) --}}
+    @if($isManager && !$isLocked)
+    <div class="flex flex-wrap items-center gap-3 px-5 py-3 bg-slate-50 border-t border-slate-100">
+        <div class="flex items-center gap-2 flex-1">
+            <label class="text-[10px] font-bold text-slate-500 uppercase whitespace-nowrap">Tổng DT CH:</label>
+            <input type="text" inputmode="numeric" id="total_revenue_input" placeholder="0"
+                class="w-44 px-3 py-1.5 rounded-lg border-2 border-amber-200 font-bold text-amber-700 outline-none text-sm focus:border-amber-400"
+                value="{{ $storeRev > 0 ? number_format($storeRev, 0, ',', '.') : '' }}"
+                onfocus="unfmtInput(this)" onblur="fmtInput(this)">
+            <button onclick="equalizeKPI()"
+                class="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-bold text-xs shadow transition-all">
+                ⚡ Cân bằng KPI
+            </button>
+        </div>
+        <button onclick="lockDay()"
+            class="px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-bold text-xs shadow transition-all ml-auto">
+            🔒 Khóa ngày
+        </button>
+    </div>
+    @endif
+    @endif
 </div>
 
-@if($storeId)
+{{-- ═══ BẢNG NHẬP CÔNG ═══ --}}
+@if($storeId && $users->count())
 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse table-compact min-w-[1400px]">
-            <thead class="bg-slate-800 text-white text-[9px] uppercase font-bold tracking-wider">
-                <tr>
-                    <th rowspan="2" class="px-4 py-4 border-r border-slate-700 sticky left-0 bg-slate-800 z-20">Họ và tên / Chức danh</th>
-                    <th colspan="3" class="px-4 py-2 text-center border-r border-slate-700 bg-blue-600">Giờ công</th>
-                    <th colspan="3" class="px-4 py-2 text-center border-r border-slate-700 bg-emerald-600">Doanh thu cá nhân</th>
-                    <th colspan="4" class="px-4 py-2 text-center border-r border-slate-700 bg-slate-600">Kết quả chi tiết</th>
-                    <th rowspan="2" class="px-4 py-4 text-right bg-amber-500 text-white">KPI Cá nhân</th>
-                    <th colspan="3" class="px-4 py-2 text-center bg-rose-600">Hiệu suất cá nhân</th>
-                </tr>
-                <tr class="bg-slate-700">
-                    <th class="px-2 py-2 text-center border-r border-slate-600 w-16 text-[8px]">Sáng</th>
-                    <th class="px-2 py-2 text-center border-r border-slate-600 w-16 text-[8px]">Chiều</th>
-                    <th class="px-2 py-2 text-center border-r border-slate-600 w-16 text-[8px]">Tối</th>
-                    <th class="px-2 py-2 text-center border-r border-slate-600 w-24 text-[8px]">DT Sáng</th>
-                    <th class="px-2 py-2 text-center border-r border-slate-600 w-24 text-[8px]">DT Chiều</th>
-                    <th class="px-2 py-2 text-center border-r border-slate-600 w-24 text-[8px]">DT Tối</th>
-                    <th class="px-2 py-2 text-center border-r border-slate-600 w-12 text-[8px]">KH</th>
-                    <th class="px-2 py-2 text-center border-r border-slate-600 w-12 text-[8px]">Thử</th>
-                    <th class="px-2 py-2 text-center border-r border-slate-600 w-12 text-[8px]">Đơn</th>
-                    <th class="px-2 py-2 text-center border-r border-slate-600 w-12 text-[8px]">SP</th>
-                    <th class="px-2 py-2 text-right border-r border-rose-500 w-28 text-[8px]">Tổng DTCN</th>
-                    <th class="px-2 py-2 text-center border-r border-rose-500 w-20 text-[8px]">SP/BILL</th>
-                    <th class="px-2 py-2 text-center w-24 text-[8px]">VND/BILL</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-                @foreach($users as $user)
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-4 py-3 border-r border-slate-100 sticky left-0 bg-white z-10">
-                        <div class="font-bold text-slate-800 text-xs">{{ $user->full_name }}</div>
-                        <div class="text-[8px] text-slate-400 font-bold uppercase">{{ $user->position->code ?? 'STAFF' }}</div>
-                    </td>
-                    
-                    <!-- Giờ công -->
-                    @foreach(['morning', 'afternoon', 'evening'] as $shift)
-                    <td class="px-1 py-2 border-r border-slate-100">
-                        <input type="number" step="0.5" class="w-full bg-transparent text-center text-xs font-bold focus:bg-blue-50 outline-none" 
-                            value="{{ $user->shifts[$shift]->hours ?? '' }}" onblur="updateField({{ $user->id }}, '{{ $shift }}', 'hours', this.value)">
-                    </td>
-                    @endforeach
+    <table class="w-full border-collapse text-[11px] min-w-[1100px]" id="workTable">
+        <thead>
+            <tr class="bg-slate-800 text-white text-center text-[9px] uppercase font-bold tracking-wider">
+                <th rowspan="2" class="px-4 py-3 text-left border-r border-slate-700 sticky left-0 bg-slate-800 z-20 w-44">Nhân viên</th>
+                <th colspan="3" class="px-2 py-2 border-r border-slate-700 bg-blue-800">Giờ công</th>
+                <th colspan="3" class="px-2 py-2 border-r border-slate-700 bg-emerald-800">Doanh thu cá nhân (đ)</th>
+                <th colspan="4" class="px-2 py-2 border-r border-slate-700 bg-slate-600">Số liệu phụ</th>
+                <th rowspan="2" class="px-3 py-3 bg-amber-600 text-white w-28">KPI cá nhân</th>
+                <th colspan="2" class="px-2 py-2 bg-rose-800">Hiệu suất</th>
+                @if($isManager && !$isLocked)<th rowspan="2" class="px-2 bg-slate-700 w-8"></th>@endif
+            </tr>
+            <tr class="bg-slate-700 text-center text-[8px]">
+                <th class="px-2 py-2 border-r border-slate-600 w-16 text-blue-300">🌅 Sáng</th>
+                <th class="px-2 py-2 border-r border-slate-600 w-16 text-blue-300">☀️ Chiều</th>
+                <th class="px-2 py-2 border-r border-slate-600 w-16 text-blue-300">🌙 Tối</th>
+                <th class="px-2 py-2 border-r border-slate-600 w-24 text-emerald-300">Sáng</th>
+                <th class="px-2 py-2 border-r border-slate-600 w-24 text-emerald-300">Chiều</th>
+                <th class="px-2 py-2 border-r border-slate-600 w-24 text-emerald-300">Tối</th>
+                <th class="px-2 py-2 border-r border-slate-600 w-12">KH</th>
+                <th class="px-2 py-2 border-r border-slate-600 w-12">Thử</th>
+                <th class="px-2 py-2 border-r border-slate-600 w-12">Đơn</th>
+                <th class="px-2 py-2 border-r border-slate-600 w-12">SP</th>
+                <th class="px-2 py-2 border-r border-rose-700 w-28 text-rose-300">Tổng DT</th>
+                <th class="px-2 py-2 w-16 text-rose-300">SP/Bill</th>
+                @if($isManager && !$isLocked)<th></th>@endif
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+        @foreach($users as $user)
+        @php
+            $kd          = $kpiData[$user->id] ?? ['totalRev'=>0,'target'=>0,'kpiPct'=>0];
+            $kpiColor    = $kd['kpiPct'] >= 100 ? 'text-emerald-600' : ($kd['kpiPct'] >= 80 ? 'text-amber-500' : 'text-rose-500');
+            $isSales     = $user->position && $user->position->is_sales;
+            $dk          = $user->daily_kpi;  // EmployeeDailyKpi record
+            $totalOrders = $dk ? $dk->orders   : 0;
+            $totalProds  = $dk ? $dk->products : 0;
+            $spBill      = $totalOrders > 0 ? round($totalProds / $totalOrders, 1) : '-';
+            $hasAnyHours = $user->shifts->sum('hours') > 0;  // có ít nhất 1 ca có giờ
+        @endphp
+        <tr class="{{ $loop->even ? 'bg-slate-50/40' : 'bg-white' }} hover:bg-blue-50/20 transition-colors"
+            data-user-id="{{ $user->id }}" data-user-name="{{ $user->full_name }}">
 
-                    <!-- Doanh thu cá nhân -->
-                    @foreach(['morning', 'afternoon', 'evening'] as $shift)
-                    <td class="px-1 py-2 border-r border-slate-100">
-                        <input type="number" class="w-full bg-transparent text-right text-[10px] font-bold focus:bg-emerald-50 outline-none" 
-                            value="{{ isset($user->shifts[$shift]) ? round($user->shifts[$shift]->personal_revenue) : '' }}" onblur="updateField({{ $user->id }}, '{{ $shift }}', 'personal_revenue', this.value)">
-                    </td>
-                    @endforeach
+            {{-- Tên + chức danh --}}
+            <td class="px-3 py-3 border-r border-slate-100 sticky left-0 {{ $loop->even ? 'bg-slate-50' : 'bg-white' }} z-10">
+                <div class="font-bold text-slate-800 text-xs leading-tight">{{ $user->full_name }}</div>
+                <div class="text-[8px] font-bold uppercase mt-0.5 {{ $isSales ? 'text-blue-500' : 'text-slate-400' }}">
+                    {{ $user->position->code ?? 'STAFF' }}
+                    @if(!$isSales)<span class="text-slate-300">· non-sales</span>@endif
+                </div>
+            </td>
 
-                    <!-- Kết quả chi tiết (Lấy từ ca sáng làm đại diện hoặc tổng) -->
-                    @foreach(['customers', 'fitting_rooms', 'orders', 'products'] as $field)
-                    <td class="px-1 py-2 border-r border-slate-100 text-center">
-                        <input type="number" class="w-full bg-transparent text-center text-[10px] focus:bg-slate-100 outline-none" 
-                            value="{{ $user->shifts->first()->$field ?? 0 }}" onblur="updateField({{ $user->id }}, 'morning', '{{ $field }}', this.value)">
-                    </td>
-                    @endforeach
+            {{-- Giờ công từng ca --}}
+            @foreach(['morning','afternoon','evening'] as $shift)
+            <td class="px-1 py-1.5 border-r border-slate-100 bg-blue-50/30">
+                @if(!$isLocked)
+                <input type="number" step="0.5" min="0" max="12"
+                    class="w-full text-center text-xs font-bold py-1 rounded outline-none focus:bg-blue-100 bg-transparent text-blue-700 transition-all"
+                    value="{{ $user->shifts[$shift]->hours ?? '' }}"
+                    data-user-id="{{ $user->id }}" data-shift="{{ $shift }}" data-field="hours"
+                    onblur="saveField(this)" placeholder="–">
+                @else
+                <span class="block text-center text-xs font-bold text-blue-700">{{ $user->shifts[$shift]->hours ?? '–' }}</span>
+                @endif
+            </td>
+            @endforeach
 
-                    <!-- KPI Cá nhân -->
-                    <td class="px-4 py-3 text-right bg-amber-50 border-r border-amber-100">
-                        @php 
-                            $totalRev = $user->shifts->sum('personal_revenue');
-                            $target = $user->shifts->first()->target_amount ?? 0;
-                            $pct = ($target > 0) ? ($totalRev / $target * 100) : 0;
-                        @endphp
-                        <div class="font-bold text-slate-800 text-xs">{{ round($pct, 1) }}%</div>
-                        <div class="text-[8px] text-slate-400 font-mono">T: {{ number_format($target/1000, 0) }}k</div>
-                    </td>
+            {{-- DT cá nhân từng ca — chỉ enable khi ca đó có giờ công --}}
+            @foreach(['morning','afternoon','evening'] as $shift)
+            @php
+                $dtVal    = isset($user->shifts[$shift]) && $user->shifts[$shift]->personal_revenue > 0 ? (int)round($user->shifts[$shift]->personal_revenue) : '';
+                $hasHours = isset($user->shifts[$shift]) && $user->shifts[$shift]->hours > 0;
+            @endphp
+            <td class="px-1 py-1.5 border-r border-slate-100 bg-emerald-50/20">
+                @if(!$isLocked)
+                <input type="text" inputmode="numeric"
+                    class="w-full text-right text-[10px] font-bold py-1 rounded outline-none bg-transparent text-emerald-700 transition-all
+                           {{ $hasHours ? 'focus:bg-emerald-100 cursor-text' : 'opacity-30 cursor-not-allowed' }}"
+                    value="{{ $dtVal && $hasHours ? number_format($dtVal, 0, ',', '.') : '' }}"
+                    data-raw="{{ $dtVal }}"
+                    data-user-id="{{ $user->id }}" data-shift="{{ $shift }}" data-field="personal_revenue"
+                    {{ !$hasHours ? 'disabled' : 'onfocus="unfmt(this)" oninput="liveFormat(this)" onblur="fmtAndSave(this)"' }}
+                    placeholder="–">
+                @else
+                <span class="block text-right text-[10px] font-bold text-emerald-700">
+                    {{ $dtVal && $hasHours ? number_format($dtVal, 0, ',', '.') : '–' }}
+                </span>
+                @endif
+            </td>
+            @endforeach
 
-                    <!-- Hiệu suất -->
-                    <td class="px-4 py-3 text-right font-bold text-rose-600 text-xs border-r border-slate-100">
-                        {{ number_format($totalRev, 0, ',', '.') }}
-                    </td>
-                    <td class="px-4 py-3 text-center text-slate-600 text-[10px] border-r border-slate-100">
-                        @php $totalProducts = $user->shifts->sum('products'); $totalOrders = $user->shifts->sum('orders'); @endphp
-                        {{ $totalOrders > 0 ? round($totalProducts / $totalOrders, 1) : 0 }}
-                    </td>
-                    <td class="px-4 py-3 text-center text-slate-600 text-[10px]">
-                        {{ $totalOrders > 0 ? number_format($totalRev / $totalOrders, 0, ',', '.') : 0 }}
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+            {{-- Số liệu phụ — chỉ enable khi có ít nhất 1 ca có giờ --}}
+            @foreach(['customers'=>'KH','fitting_rooms'=>'Thử','orders'=>'Đơn','products'=>'SP'] as $field => $label)
+            <td class="px-1 py-1.5 border-r border-slate-100">
+                @if(!$isLocked)
+                <input type="number" min="0"
+                    class="w-full text-center text-[10px] font-bold py-1 rounded outline-none bg-transparent text-slate-600 transition-all
+                           {{ $hasAnyHours ? 'focus:bg-slate-100 cursor-text' : 'opacity-30 cursor-not-allowed' }}"
+                    value="{{ $dk && $hasAnyHours ? ($dk->$field ?: '') : '' }}"
+                    data-user-id="{{ $user->id }}" data-shift="morning" data-field="{{ $field }}"
+                    {{ !$hasAnyHours ? 'disabled' : 'onblur="saveField(this)"' }}
+                    placeholder="–">
+                @else
+                <span class="block text-center text-[10px] font-bold text-slate-600">{{ $dk ? ($dk->$field ?: '–') : '–' }}</span>
+                @endif
+            </td>
+            @endforeach
+
+            {{-- KPI cá nhân --}}
+            <td class="px-3 py-3 text-center bg-amber-50 border-r border-amber-100 min-w-[140px]">
+                @if($isSales)
+                <div class="kpi-pct font-black text-base {{ $kpiColor }}" id="kpi-pct-{{ $user->id }}">
+                    {{ $kd['kpiPct'] }}%
+                </div>
+                <div class="text-[9px] text-slate-500 mt-0.5">
+                    T: <span id="kpi-target-{{ $user->id }}">{{ number_format($kd['target'], 0, ',', '.') }}</span>
+                </div>
+                <div class="text-[9px] font-bold text-emerald-600 mt-0.5" id="kpi-rev-{{ $user->id }}">
+                    {{ $kd['totalRev'] > 0 ? number_format($kd['totalRev'], 0, ',', '.') : '0' }}
+                </div>
+                @else
+                <span class="text-[8px] text-slate-300">–</span>
+                @endif
+            </td>
+
+            {{-- Hiệu suất --}}
+            <td class="px-3 py-3 text-right border-r border-slate-100">
+                <div class="font-black text-xs text-rose-600" id="kpi-total-rev-{{ $user->id }}">
+                    {{ $kd['totalRev'] > 0 ? number_format($kd['totalRev'], 0, ',', '.') : '–' }}
+                </div>
+            </td>
+            <td class="px-2 py-3 text-center">
+                <span class="text-[10px] font-bold text-slate-500" id="sp-bill-{{ $user->id }}">{{ $spBill }}</span>
+            </td>
+
+            {{-- Nút xóa (QLCH) --}}
+            @if($isManager && !$isLocked)
+            <td class="px-2 py-3 text-center">
+                <button onclick="deleteEmployee({{ $user->id }}, '{{ addslashes($user->full_name) }}')"
+                    class="w-6 h-6 flex items-center justify-center rounded-full bg-rose-100 hover:bg-rose-200 text-rose-400 hover:text-rose-600 transition-all text-xs font-black mx-auto"
+                    title="Xóa dữ liệu ngày">✕</button>
+            </td>
+            @endif
+        </tr>
+        @endforeach
+        </tbody>
+
+        {{-- Footer tổng --}}
+        <tfoot class="bg-slate-800 text-white text-[9px] font-bold">
+            <tr>
+                <td class="px-4 py-2 sticky left-0 bg-slate-800 uppercase tracking-wider">Tổng</td>
+                <td colspan="3" class="text-center border-r border-slate-700">
+                    {{ number_format($users->sum(fn($u) => $u->shifts->sum('hours')), 1) }}h
+                </td>
+                <td colspan="3" class="text-right px-2 border-r border-slate-700 text-emerald-300">
+                    {{ number_format($totals['store_revenue'] ?? 0, 0, ',', '.') }}
+                </td>
+                <td class="text-center border-r border-slate-700">{{ $totals['customers'] ?? 0 }}</td>
+                <td class="text-center border-r border-slate-700">{{ $totals['fitting_rooms'] ?? 0 }}</td>
+                <td class="text-center border-r border-slate-700">{{ $totals['orders'] ?? 0 }}</td>
+                <td class="text-center border-r border-slate-700">{{ $totals['products'] ?? 0 }}</td>
+                <td colspan="3" class="text-center text-amber-300">
+                    KPI Store: {{ $kpiStorePct }}%
+                </td>
+                @if($isManager && !$isLocked)<td></td>@endif
+            </tr>
+        </tfoot>
+    </table>
     </div>
+</div>
+@elseif($storeId)
+<div class="bg-white rounded-2xl border border-slate-100 p-12 text-center text-slate-400">
+    <div class="text-3xl mb-2">👥</div>
+    <p class="font-bold">Chưa có nhân viên nào trong cửa hàng này.</p>
+</div>
+@else
+<div class="bg-white rounded-2xl border border-slate-100 p-12 text-center text-slate-400">
+    <div class="text-3xl mb-2">🏪</div>
+    <p class="font-bold">Chọn cửa hàng để bắt đầu nhập công.</p>
 </div>
 @endif
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    function updateField(userId, shiftType, field, value) {
-        fetch('{{ route("fe.daily.update") }}', {
+const STORE_ID  = '{{ $storeId }}';
+const DATE      = '{{ $date }}';
+const TOKEN     = '{{ csrf_token() }}';
+const KPI_TARGET= {{ $kpiTarget }};
+
+function navigate() {
+    const d = document.getElementById('picker_date').value;
+    const s = document.getElementById('picker_store').value;
+    window.location.href = '?date=' + d + '&store_id=' + s;
+}
+
+// ── Save-on-blur — không reload ──
+async function saveField(el) {
+    const val   = el.value;
+    const field = el.dataset.field;
+
+    // Với giờ công: cho phép gửi khi val rỗng (để backend xóa bản ghi)
+    // Các field khác: bỏ qua nếu rỗng hoặc không đổi
+    if (field !== 'hours' && val === '') return;
+    if (val === el.dataset.prev) return;
+    el.dataset.prev = val;
+
+    el.style.outline = '2px solid #f59e0b';
+
+    try {
+        const res = await fetch('{{ route("fe.daily.update") }}', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            body: JSON.stringify({ user_id: userId, store_id: '{{ $storeId }}', date: '{{ $date }}', shift_type: shiftType, field: field, value: value || 0 })
-        }).then(() => { if(field === 'personal_revenue' || field === 'hours') location.reload(); });
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': TOKEN },
+            body: JSON.stringify({
+                user_id   : el.dataset.userId,
+                store_id  : STORE_ID,
+                date      : DATE,
+                shift_type: el.dataset.shift,
+                field     : el.dataset.field,
+                value     : val || 0,
+            })
+        });
+        const data = await res.json();
+
+        el.style.outline = '2px solid #10b981';
+        setTimeout(() => el.style.outline = '', 1200);
+
+        if (data.all_kpi) updateAllKPI(data.all_kpi);
+        if (data.totals)  updateTotals(data.totals);
+
+        // Khi lưu giờ công → cập nhật enable/disable DT + số liệu phụ ngay
+        if (el.dataset.field === 'hours') {
+            updateShiftState(el.dataset.userId, el.dataset.shift, parseFloat(val) || 0);
+        }
+    } catch(e) {
+        el.style.outline = '2px solid #ef4444';
+        console.error(e);
+    }
+}
+
+// ── Enable/disable DT + số liệu phụ theo giờ công ──
+function updateShiftState(userId, shift, hours) {
+    const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+    if (!row) return;
+
+    // DT input của ca này
+    const dtInput = row.querySelector(`input[data-shift="${shift}"][data-field="personal_revenue"]`);
+    if (dtInput) {
+        const active = hours > 0;
+        dtInput.disabled = !active;
+        dtInput.classList.toggle('opacity-30',        !active);
+        dtInput.classList.toggle('cursor-not-allowed', !active);
+        dtInput.classList.toggle('cursor-text',        active);
+        if (active) {
+            dtInput.addEventListener('focus',  function() { unfmt(this); }, { once: false });
+            dtInput.addEventListener('input',  function() { liveFormat(this); }, { once: false });
+            dtInput.addEventListener('blur',   function() { fmtAndSave(this); }, { once: false });
+            // Restore event attrs
+            dtInput.onfocus = () => unfmt(dtInput);
+            dtInput.oninput = () => liveFormat(dtInput);
+            dtInput.onblur  = () => fmtAndSave(dtInput);
+        } else {
+            dtInput.value  = '';
+            dtInput.onfocus = null;
+            dtInput.oninput = null;
+            dtInput.onblur  = null;
+        }
     }
 
-    function equalizeKPI() {
-        const totalRev = document.getElementById('total_revenue_input').value;
-        if (!totalRev) return;
-        fetch('{{ route("fe.daily.equalize") }}', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            body: JSON.stringify({ date: '{{ $date }}', store_id: '{{ $storeId }}', total_revenue: totalRev })
-        }).then(() => location.reload());
+    // Kiểm tra ALL ca trong row có giờ không → enable/disable secondary metrics
+    const hourInputs    = row.querySelectorAll('input[data-field="hours"]');
+    const hasAnyHours   = Array.from(hourInputs).some(inp => parseFloat(inp.value) > 0);
+    const secFields     = ['customers', 'fitting_rooms', 'orders', 'products'];
+    secFields.forEach(f => {
+        const inp = row.querySelector(`input[data-field="${f}"]`);
+        if (!inp) return;
+        inp.disabled = !hasAnyHours;
+        inp.classList.toggle('opacity-30',        !hasAnyHours);
+        inp.classList.toggle('cursor-not-allowed', !hasAnyHours);
+        inp.classList.toggle('cursor-text',        hasAnyHours);
+        inp.onblur = hasAnyHours ? () => saveField(inp) : null;
+        if (!hasAnyHours) inp.value = '';
+    });
+}
+
+// ── Format tiền — luôn dùng dấu chấm bất kể locale trình duyệt ──
+function fmtVND(n) {
+    if (!n) return '';
+    return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+// helpers cho input "Tổng DT CH"
+function unfmtInput(el) {
+    el.value = el.value.replace(/\./g, '').replace(/,/g, '');
+    el.select();
+}
+function fmtInput(el) {
+    const n = parseFloat(el.value.replace(/\./g, '').replace(/,/g, '')) || 0;
+    el.value = n > 0 ? fmtVND(n) : '';
+}
+function unfmt(el) {
+    // Focus: hiện số thô để dễ sửa
+    const raw = el.value.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '');
+    el.value = raw || '';
+    el.select();
+}
+function liveFormat(el) {
+    // Đếm số chữ số trước cursor (để restore sau khi format)
+    const selStart    = el.selectionStart;
+    const beforeCursor = el.value.substring(0, selStart).replace(/\D/g, '').length;
+
+    // Lấy digits thuần
+    const raw = el.value.replace(/\D/g, '');
+    if (!raw) { el.value = ''; return; }
+
+    // Format với dấu chấm
+    const formatted = parseInt(raw, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    el.value = formatted;
+
+    // Khôi phục cursor: đếm lại vị trí digit thứ n trong chuỗi đã format
+    let digits = 0, newPos = formatted.length;
+    for (let i = 0; i < formatted.length; i++) {
+        if (/\d/.test(formatted[i])) {
+            digits++;
+            if (digits === beforeCursor) { newPos = i + 1; break; }
+        }
     }
+    try { el.setSelectionRange(newPos, newPos); } catch(e) {}
+}
+async function fmtAndSave(el) {
+    const raw = el.value.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '');
+    const num = parseFloat(raw) || 0;
+    el.value = num > 0 ? fmtVND(num) : '';
+
+    if (raw === el.dataset.prev) return;
+    el.dataset.prev = raw;
+
+    el.style.outline = '2px solid #f59e0b';
+    try {
+        const res = await fetch('{{ route("fe.daily.update") }}', {
+            method : 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': TOKEN },
+            body   : JSON.stringify({
+                user_id   : el.dataset.userId,
+                store_id  : STORE_ID,
+                date      : DATE,
+                shift_type: el.dataset.shift,
+                field     : el.dataset.field,
+                value     : num,
+            })
+        });
+        const data = await res.json();
+        el.style.outline = '2px solid #10b981';
+        setTimeout(() => el.style.outline = '', 1200);
+        if (data.all_kpi) updateAllKPI(data.all_kpi);
+        if (data.totals)  updateTotals(data.totals);
+    } catch(e) {
+        el.style.outline = '2px solid #ef4444';
+        console.error(e);
+    }
+}
+
+// ── Cập nhật KPI từng NV trên DOM ──
+function updateAllKPI(allKpi) {
+    for (const [userId, kpi] of Object.entries(allKpi)) {
+        const pct   = kpi.kpi_pct;
+        const color = pct >= 100 ? '#059669' : pct >= 80 ? '#d97706' : '#e11d48';
+
+        const elPct     = document.getElementById('kpi-pct-'      + userId);
+        const elTgt     = document.getElementById('kpi-target-'   + userId);
+        const elRev     = document.getElementById('kpi-rev-'      + userId);
+        const elTotalRev= document.getElementById('kpi-total-rev-'+ userId);
+
+        if (elPct)     { elPct.textContent = pct.toFixed(1) + '%'; elPct.style.color = color; }
+        if (elTgt)       elTgt.textContent     = fmtVND(kpi.target);
+        if (elRev)       elRev.textContent     = fmtVND(kpi.total_rev);
+        if (elTotalRev)  elTotalRev.textContent= kpi.total_rev > 0 ? fmtVND(kpi.total_rev) : '–';
+    }
+}
+
+// ── Cập nhật stats header ──
+function updateTotals(t) {
+    const rev    = t.store_revenue || 0;
+    const pct    = KPI_TARGET > 0 ? (rev / KPI_TARGET * 100).toFixed(1) : 0;
+    const color  = pct >= 100 ? '#059669' : pct >= 80 ? '#d97706' : '#e11d48';
+
+    const elPct  = document.getElementById('stat-kpi-pct');
+    const elRev  = document.getElementById('stat-store-rev');
+    if (elPct) { elPct.textContent = pct; elPct.style.color = color; }
+    if (elRev)   elRev.textContent = Math.round(rev).toLocaleString('vi-VN');
+
+    const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+    set('stat-customers', t.customers || 0);
+    set('stat-orders',    t.orders    || 0);
+    set('stat-products',  t.products  || 0);
+}
+
+// ── Cân bằng KPI ──
+async function equalizeKPI() {
+    const rawRev  = document.getElementById('total_revenue_input').value.replace(/\./g, '').replace(/,/g, '');
+    const totalRev = parseFloat(rawRev) || 0;
+    if (!totalRev || !STORE_ID) {
+        Swal.fire('Thiếu dữ liệu', 'Vui lòng nhập Tổng DT cửa hàng trước', 'warning');
+        return;
+    }
+    const result = await Swal.fire({
+        title: '⚡ Cân bằng KPI?',
+        html : `Phân bổ <b>${fmtVND(totalRev)}đ</b><br>cho toàn bộ NV theo tỷ lệ giờ công?`,
+        icon : 'question',
+        showCancelButton: true,
+        confirmButtonText: '⚡ Cân bằng',
+        cancelButtonText : 'Hủy',
+        confirmButtonColor: '#f59e0b',
+    });
+    if (!result.isConfirmed) return;
+
+    const res  = await fetch('{{ route("fe.daily.equalize") }}', {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': TOKEN },
+        body   : JSON.stringify({ date: DATE, store_id: STORE_ID, total_revenue: totalRev }),
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+        Swal.fire({ title: 'Thành công!', text: 'Đã cân bằng KPI.', icon: 'success', timer: 1500, showConfirmButton: false })
+            .then(() => location.reload());
+    } else {
+        Swal.fire('Lỗi', data.message, 'error');
+    }
+}
+
+// ── Khóa ngày ──
+async function lockDay() {
+    const result = await Swal.fire({
+        title: '🔒 Khóa ngày ' + DATE + '?',
+        text : 'Sau khi khóa, nhân viên không thể sửa dữ liệu nữa.',
+        icon : 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Khóa',
+        cancelButtonText : 'Hủy',
+        confirmButtonColor: '#ef4444',
+    });
+    if (!result.isConfirmed) return;
+
+    await fetch('{{ route("fe.daily.lock") }}', {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': TOKEN },
+        body   : JSON.stringify({ date: DATE, store_id: STORE_ID }),
+    });
+    location.reload();
+}
+
+// ── Xóa dữ liệu NV ──
+async function deleteEmployee(userId, userName) {
+    const result = await Swal.fire({
+        title: 'Xóa dữ liệu?',
+        html : `Xóa toàn bộ dữ liệu ngày <b>${DATE}</b> của <b>${userName}</b>?`,
+        icon : 'warning',
+        showCancelButton: true,
+        confirmButtonText: '🗑 Xóa',
+        cancelButtonText : 'Hủy',
+        confirmButtonColor: '#ef4444',
+    });
+    if (!result.isConfirmed) return;
+
+    const res = await fetch(`{{ url('/staff-shift-kpi/daily/records') }}/${userId}?store_id=${STORE_ID}&date=${DATE}`, {
+        method : 'DELETE',
+        headers: { 'X-CSRF-TOKEN': TOKEN },
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+        const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+        if (row) { row.style.opacity = '0'; row.style.transition = 'opacity 0.3s'; setTimeout(() => row.remove(), 300); }
+    }
+}
+
+// ── Ẩn spinner số trong input ──
 </script>
 <style>
-    .table-compact input::-webkit-outer-spin-button, .table-compact input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    #workTable input[type=number]::-webkit-inner-spin-button,
+    #workTable input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    #workTable input[type=number] { -moz-appearance: textfield; }
+    #workTable input { transition: outline 0.2s, background 0.2s; }
 </style>
 @endsection

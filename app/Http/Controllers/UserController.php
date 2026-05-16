@@ -54,11 +54,18 @@ class UserController extends Controller
             'role' => $request->role,
             'store_id' => $request->store_id,
             'position_id' => $request->position_id,
-            'salary_per_hour' => $request->salary_per_hour ?? 0,
+            'hourly_rate'    => $request->hourly_rate ?? 0,
             'contract_type' => $request->contract_type ?? 'CT',
         ]);
 
         return back()->with('success', 'Thêm nhân sự thành công!');
+    }
+
+    public function update(Request $request, User $user)
+    {
+        $request->validate(['hourly_rate' => 'required|numeric|min:0']);
+        $user->update(['hourly_rate' => $request->hourly_rate]);
+        return back()->with('success', 'Cập nhật lương/giờ thành công!');
     }
 
     public function destroy(User $user)

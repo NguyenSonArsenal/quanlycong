@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ShiftRecord extends Model
+class EmployeeDailyKpi extends Model
 {
+    protected $table = 'employee_daily_kpi';
+
     protected $fillable = [
-        'user_id', 'store_id', 'date', 'shift_type',
-        'hours', 'shift_revenue', 'personal_revenue', 'is_locked',
+        'user_id', 'store_id', 'date',
+        'target_amount', 'kpi_percentage', 'total_personal_revenue',
+        'customers', 'fitting_rooms', 'orders', 'products',
     ];
 
     public function user()
