@@ -42,6 +42,8 @@ Route::prefix('staff-shift-kpi')->group(function () {
         Route::get('/kpi-config', [KpiController::class, 'index'])->name('kpi-config.index');
         Route::post('/kpi-config', [KpiController::class, 'store'])->name('kpi-config.store');
         Route::get('/kpi-config/{id}', [KpiController::class, 'show'])->name('kpi-config.show');
+        Route::patch('/kpi-config/{id}', [KpiController::class, 'update'])->name('kpi-config.update');
+        Route::delete('/kpi-config/{id}', [KpiController::class, 'destroy'])->name('kpi-config.destroy');
         Route::post('/kpi-config/{id}/matrix', [KpiController::class, 'updateMatrix'])->name('kpi-config.update-matrix');
         Route::post('/kpi-config/{id}/regenerate', [KpiController::class, 'regenerate'])->name('kpi-config.regenerate');
     });

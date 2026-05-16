@@ -12,17 +12,29 @@ use Illuminate\Support\Facades\DB;
 
 class KpiController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $stores  = Store::orderBy('code')->get();
-        $configs = KpiConfig::with('store')->orderBy('month', 'desc')->get();
+        $stores = Store::orderBy('code')->get();
 
-        // Nếu đã có config → redirect thẳng vào show của config mới nhất
-        if ($configs->isNotEmpty()) {
-            return redirect()->route('fe.kpi-config.show', $configs->first()->id);
+        // Lấy danh sách năm có KPI để fill filter
+        $years = KpiConfig::selectRaw('YEAR(month) as y')
+            ->distinct()->orderByDesc('y')->pluck('y');
+
+        $query = KpiConfig::with(['store', 'dailyTargets'])->orderBy('month', 'desc');
+
+        if ($request->filled('store_id')) {
+            $query->where('store_id', $request->store_id);
+        }
+        if ($request->filled('year')) {
+            $query->whereYear('month', $request->year);
+        }
+        if ($request->filled('month')) {
+            $query->whereRaw('MONTH(month) = ?', [(int)$request->month]);
         }
 
-        return view('kpis.index', compact('stores', 'configs'));
+        $configs = $query->paginate(12)->withQueryString();
+
+        return view('kpis.index', compact('stores', 'configs', 'years'));
     }
 
     public function store(Request $request)
@@ -37,19 +49,12 @@ class KpiController extends Controller
         try {
             // Tỷ trọng ngày mặc định: T2-T5 (early) vs T6-CN (late)
             // Sử dụng ratio từ form để tính tỷ trọng 7 ngày trong tuần
-            $earlyRatio = (float)($request->weekday_ratio ?? 1.0);
-            $lateRatio  = (float)($request->weekend_ratio ?? 1.5);
-
-            // daily_ratios: key là dayOfWeek của Carbon (1=T2, ..., 5=T6, 6=T7, 7=CN)
-            $totalRaw = ($earlyRatio * 4) + ($lateRatio * 3); // 4 ngày early, 3 ngày late
+            // daily_ratios l\u01b0u % t\u1eebng lo\u1ea1i ng\u00e0y (t\u1ef7 l\u1ec7 \u0111\u00fang l\u00e0 \u0111\u1ee7)
+            $earlyPct = max(0.01, (float)($request->input('day_weights.1', 50)));
+            $latePct  = max(0.01, (float)($request->input('day_weights.5', 50)));
             $dailyRatios = [
-                1 => round($earlyRatio / $totalRaw * 100, 4), // T2
-                2 => round($earlyRatio / $totalRaw * 100, 4), // T3
-                3 => round($earlyRatio / $totalRaw * 100, 4), // T4
-                4 => round($earlyRatio / $totalRaw * 100, 4), // T5
-                5 => round($lateRatio  / $totalRaw * 100, 4), // T6
-                6 => round($lateRatio  / $totalRaw * 100, 4), // T7
-                7 => round($lateRatio  / $totalRaw * 100, 4), // CN
+                1 => $earlyPct, 2 => $earlyPct, 3 => $earlyPct, 4 => $earlyPct,
+                5 => $latePct,  6 => $latePct,  7 => $latePct,
             ];
 
             // weekly_ratios mặc định chia đều
@@ -75,7 +80,53 @@ class KpiController extends Controller
 
             DB::commit();
             return redirect()->route('fe.kpi-config.show', $config->id)
-                ->with('success', 'Đã khởi tạo KPI! Kiểm tra lại tỷ trọng tuần bên dưới và lưu.');
+                ->with('success', 'Đã tạo KPI thành công! Cấu hình chi tiết tỷ trọng bên dưới và nhấn Lưu.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Lỗi: ' . $e->getMessage());
+        }
+    }
+
+    // Cập nhật basic info (từ Edit modal trên màn list)
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'store_id'     => 'required|exists:stores,id',
+            'month'        => 'required|date_format:Y-m',
+            'total_target' => 'required|numeric|min:1',
+        ]);
+
+        $config = KpiConfig::findOrFail($id);
+        DB::beginTransaction();
+        try {
+            $config->update([
+                'store_id'     => $request->store_id,
+                'month'        => $request->month,
+                'total_target' => $request->total_target,
+            ]);
+            // Tính lại daily targets theo tổng mới
+            $this->generateDailyTargets($config->fresh());
+            DB::commit();
+            return redirect()->route('fe.kpi-config.index')
+                ->with('success', 'Đã cập nhật KPI ' . $config->store->code . ' / ' . $config->month . ' thành công!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Lỗi: ' . $e->getMessage());
+        }
+    }
+
+    // Xoá config + toàn bộ daily targets
+    public function destroy($id)
+    {
+        $config = KpiConfig::findOrFail($id);
+        $label  = $config->store->code . ' / ' . $config->month;
+        DB::beginTransaction();
+        try {
+            DailyTarget::where('kpi_config_id', $id)->delete();
+            $config->delete();
+            DB::commit();
+            return redirect()->route('fe.kpi-config.index')
+                ->with('success', 'Đã xoá cấu hình KPI: ' . $label);
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Lỗi: ' . $e->getMessage());
@@ -258,11 +309,11 @@ class KpiController extends Controller
 
         DailyTarget::where('kpi_config_id', $config->id)->delete();
 
-        foreach ($weekGroups as $weekNum => $dates) {
-            $weekWeight = $weeklyRatios[$weekNum] ?? 20.0;
+        foreach ($weekGroups as $wn => $dates) {
+            $weekWeight = $weeklyRatios[$wn] ?? 20.0;
             $weekTarget = ($config->total_target * $weekWeight) / 100;
 
-            // Tổng day_weight chỉ của các ngày thực tế có trong tuần này
+            // T\u1ed5ng day_weight ch\u1ec9 c\u1ee7a c\u00e1c ng\u00e0y th\u1ef1c t\u1ebf c\u00f3 trong tu\u1ea7n n\u00e0y
             $totalDayWeightInWeek = collect($dates)->sum(function($d) use ($dailyRatios) {
                 $dow = $d->isoWeekday();
                 return $dailyRatios[$dow] ?? 0;
@@ -278,9 +329,7 @@ class KpiController extends Controller
                 DailyTarget::create([
                     'kpi_config_id'     => $config->id,
                     'date'              => $date->toDateString(),
-                    'week_number'       => $weekNum,
-                    'week_weight'       => $weekWeight,
-                    'day_weight'        => round($dayWeight, 4),
+                    'week_number'       => $wn,          // fix: d\u00f9ng $wn (key) thay v\u00ec $weekNum
                     'target_amount'     => round($dayTarget, 2),
                     'rebalanced_target' => round($dayTarget, 2),
                 ]);
