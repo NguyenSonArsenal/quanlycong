@@ -66,5 +66,6 @@ class Kernel extends HttpKernel
         'authBackend'  => \App\Http\Middleware\AuthBackend::class,
         'authClient'   => \App\Http\Middleware\AuthClient::class,
         'internal.api' => \App\Http\Middleware\InternalApiOnly::class,
+        'permission'   => \App\Http\Middleware\CheckPermission::class,
     ];
 }

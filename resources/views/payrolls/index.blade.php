@@ -79,6 +79,7 @@
                     <th colspan="4" class="px-3 py-2 bg-purple-800 text-purple-200 border-r border-purple-700 text-center">Lương tháng</th>
                     <th colspan="1" class="px-3 py-2 bg-slate-500 text-slate-100 text-center">Giả định</th>
                     <th colspan="1" class="px-3 py-2 bg-emerald-900 text-white text-center">Thực lĩnh</th>
+                    <th colspan="1" class="px-3 py-2 bg-slate-600 text-slate-100 text-center">Chi tiết</th>
                 </tr>
                 {{-- Column header --}}
                 <tr class="bg-slate-800 text-white text-[9px] font-bold uppercase tracking-wider">
@@ -110,6 +111,8 @@
                     <th class="px-2 py-2 text-right bg-slate-600 border-r border-slate-500">GĐ 95% KPI</th>
                     {{-- Thực lĩnh --}}
                     <th class="px-2 py-2 text-right bg-emerald-800 min-w-[120px]">Thực lĩnh</th>
+                    {{-- Chi tiết --}}
+                    <th class="px-2 py-2 text-center bg-slate-700 min-w-[80px]">Chi tiết</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -119,7 +122,7 @@
                               : ($d['personal_kpi'] >= 90 ? 'bg-amber-100 text-amber-700'
                               : 'bg-slate-100 text-slate-500');
                 @endphp
-                <tr class="{{ $loop->even ? 'bg-slate-50/40' : 'bg-white' }} hover:bg-blue-50/20 transition-colors">
+                <tr id="user-{{ $d['user']->id }}" class="{{ $loop->even ? 'bg-slate-50/40' : 'bg-white' }} hover:bg-blue-50/20 transition-colors">
                     {{-- Nhân viên --}}
                     <td class="px-3 py-2.5">
                         <div class="font-bold text-slate-800">{{ $d['user']->full_name }}</div>
@@ -216,6 +219,13 @@
                     <td class="px-3 py-2.5 text-right bg-emerald-50/50">
                         <div class="font-black text-emerald-900 text-sm">{{ number_format($d['total_salary'], 0, ',', '.') }}đ</div>
                     </td>
+                    {{-- Chi tiết --}}
+                    <td class="px-3 py-2.5 text-center">
+                        <a href="{{ route('fe.profile', ['user_id' => $d['user']->id, 'month' => $month]) }}"
+                            class="px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-[9px] font-bold hover:bg-blue-200 transition-all whitespace-nowrap">
+                            📄 Hồ sơ
+                        </a>
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
@@ -247,6 +257,7 @@
                     <td class="px-3 py-2 text-right bg-emerald-800 text-emerald-200 text-sm">
                         {{ number_format(collect($payrollData)->sum('total_salary'), 0, ',', '.') }}đ
                     </td>
+                    <td class="px-3 py-2 bg-slate-700"></td>
                 </tr>
             </tfoot>
         </table>

@@ -20,31 +20,44 @@
             </div>
             <nav class="flex-1 p-4 space-y-2">
                 <a href="{{ route('fe.daily.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/daily*') ? 'bg-slate-800 text-rose-500' : '' }}">
-                    Bảng công ngày
+                    📋 Bảng công ngày
+                </a>
+                <a href="{{ route('fe.monthly.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/monthly*') ? 'bg-slate-800 text-rose-500' : '' }}">
+                    📊 Tổng quan tháng
                 </a>
                 <div class="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Danh mục</div>
                 <a href="{{ route('fe.stores.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/stores*') ? 'bg-slate-800 text-rose-500' : '' }}">
-                    Cửa hàng
+                    🏪 Cửa hàng
                 </a>
-                <a href="{{ route('fe.users.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/users*') ? 'bg-slate-800 text-rose-500' : '' }}">
-                    Nhân sự
+                <a href="{{ route('fe.users.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/staff*') ? 'bg-slate-800 text-rose-500' : '' }}">
+                    👥 Nhân sự
                 </a>
-                
+
                 <div class="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nghiệp vụ</div>
                 <a href="{{ route('fe.kpi-config.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/kpi-config*') ? 'bg-slate-800 text-rose-500' : '' }}">
-                    Cấu hình KPI
+                    ⚙️ Cấu hình KPI
                 </a>
                 <a href="{{ route('fe.payrolls.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/payrolls*') ? 'bg-slate-800 text-rose-500' : '' }}">
-                    Bảng lương
+                    💰 Bảng lương
                 </a>
+                <a href="{{ route('fe.profile') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/my-profile*') ? 'bg-slate-800 text-rose-500' : '' }}">
+                    👤 Hồ sơ của tôi
+                </a>
+
+                @if(auth()->user()->role === 'admin')
+                <div class="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Quản trị</div>
+                <a href="{{ route('fe.admin.permissions') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/admin/permissions*') ? 'bg-slate-800 text-rose-500' : '' }}">
+                    🔐 Phân quyền
+                </a>
+                @endif
             </nav>
             <div class="p-4 border-t border-slate-800">
                 <div class="flex items-center gap-3 px-4 py-2">
-                    <div class="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center font-bold text-xs">
+                    <a href="{{ route('fe.profile') }}" class="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center font-bold text-xs hover:ring-2 hover:ring-rose-300 transition-all" title="Hồ sơ của tôi">
                         {{ substr(Auth::user()->full_name, 0, 1) }}
-                    </div>
+                    </a>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">{{ Auth::user()->full_name }}</p>
+                        <a href="{{ route('fe.profile') }}" class="text-sm font-medium truncate block hover:text-rose-400 transition-colors">{{ Auth::user()->full_name }}</a>
                         <a href="{{ url('/staff-shift-kpi/logout') }}" class="text-xs text-slate-500 hover:text-rose-400">Đăng xuất</a>
                     </div>
                 </div>
