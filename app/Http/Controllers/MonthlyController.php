@@ -123,6 +123,54 @@ class MonthlyController extends Controller
             $kpiConfig   = KpiConfig::where('store_id', $storeId)->where('month', $month)->first();
             $storeTarget = $kpiConfig ? (float)$kpiConfig->total_target : 0;
             $kpiPctStore = $storeTarget > 0 ? round($grandTotalDT / $storeTarget * 100, 1) : 0;
+        } else {
+            // Lấy danh sách thống kê toàn bộ cửa hàng cho trang tổng quan chính
+            foreach ($stores as $st) {
+                // Target KPI
+                $kpiConfig = KpiConfig::where('store_id', $st->id)->where('month', $month)->first();
+                $target = $kpiConfig ? (float)$kpiConfig->total_target : 0;
+
+                // DT thực tế nhân viên nhập (sum personal_revenue)
+                $reportedRevenue = (float)ShiftRecord::where('store_id', $st->id)
+                    ->where('date', 'like', "$month%")
+                    ->sum('personal_revenue');
+
+                // DT thực tế API (giả lập)
+                // Ta mock một sai số cố định theo mã cửa hàng để tạo ra chênh lệch ngẫu nhiên nhưng nhất quán
+                $offset = 0.015; // mặc định lệch 1.5%
+                if (str_contains($st->code, 'K01') || str_contains($st->code, '01')) {
+                    $offset = -0.055; // lệch -5.5% (triggers alert)
+                } elseif (str_contains($st->code, 'K03') || str_contains($st->code, '03')) {
+                    $offset = -0.065; // lệch -6.5% (triggers alert)
+                } elseif (str_contains($st->code, 'K02') || str_contains($st->code, '02')) {
+                    $offset = 0.02;  // lệch +2%
+                }
+                $apiRevenue = $reportedRevenue * (1 + $offset);
+
+                // Tính % hoàn thành KPI
+                $kpiPct = $target > 0 ? round($reportedRevenue / $target * 100, 1) : 0;
+
+                // Tính % chênh lệch giữa nhập tay vs API
+                $diffPct = $reportedRevenue > 0 ? round(abs($reportedRevenue - $apiRevenue) / $reportedRevenue * 100, 1) : 0;
+                $isDiscrepancy = $diffPct > 5.0;
+
+                // Trạng thái khoá tháng
+                $totalShifts = ShiftRecord::where('store_id', $st->id)->where('date', 'like', "$month%")->count();
+                $lockedShifts = ShiftRecord::where('store_id', $st->id)->where('date', 'like', "$month%")->where('is_locked', true)->count();
+                $isMonthLocked = $totalShifts > 0 && $totalShifts === $lockedShifts;
+
+                $storeSummaries[] = [
+                    'store' => $st,
+                    'target' => $target,
+                    'reported_revenue' => $reportedRevenue,
+                    'api_revenue' => $apiRevenue,
+                    'kpi_pct' => $kpiPct,
+                    'diff_pct' => $diffPct,
+                    'is_discrepancy' => $isDiscrepancy,
+                    'is_month_locked' => $isMonthLocked,
+                    'total_shifts' => $totalShifts,
+                ];
+            }
         }
 
         return view('monthly.index', compact(
@@ -130,7 +178,7 @@ class MonthlyController extends Controller
             'weekNum', 'dateFrom', 'dateTo',
             'allUsers', 'selectedStore', 'selectedUser',
             'rows', 'grandTotalDT', 'grandTotalHours',
-            'storeTarget', 'kpiPctStore'
+            'storeTarget', 'kpiPctStore', 'storeSummaries'
         ));
     }
 
@@ -384,5 +432,25 @@ class MonthlyController extends Controller
             5 => 'T6', 6 => 'T7', 7 => 'CN',
             default => '?'
         };
+    }
+
+    public function toggleLockMonth(Request $request, $storeId)
+    {
+        // Chỉ admin mới có quyền khoá/mở khoá tháng
+        if (!auth()->user()->can('lock_month') && !auth()->user()->can('unlock_month')) {
+            return redirect()->back()->with('error', '❌ Bạn không có quyền khoá hoặc mở khoá tháng.');
+        }
+
+        $month = $request->input('month', date('Y-m'));
+        $action = $request->input('action'); // 'lock' hoặc 'unlock'
+
+        $isLock = $action === 'lock';
+
+        ShiftRecord::where('store_id', $storeId)
+            ->where('date', 'like', "$month%")
+            ->update(['is_locked' => $isLock]);
+
+        $msg = $isLock ? "🔒 Đã khoá bảng công toàn bộ tháng {$month}!" : "🔓 Đã mở khoá bảng công toàn bộ tháng {$month}!";
+        return redirect()->back()->with('success', $msg);
     }
 }

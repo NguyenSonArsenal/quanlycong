@@ -11,8 +11,8 @@ return new class extends Migration
         // 1. Tạo bảng employee_daily_kpi
         Schema::create('employee_daily_kpi', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('store_id')->constrained('stores')->onDelete('cascade');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('store_id');
             $table->date('date');
 
             // KPI tổng hợp cả ngày

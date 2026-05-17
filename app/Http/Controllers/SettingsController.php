@@ -18,8 +18,8 @@ class SettingsController extends Controller
             ->orderBy('min_kpi')
             ->get();
 
-        // Group brackets by position_code + contract_type
-        $bracketsGrouped = $brackets->groupBy(fn($b) => $b->position_code . '|' . $b->contract_type);
+        // Group brackets by position_code + contract_type + effective_from + effective_to
+        $bracketsGrouped = $brackets->groupBy(fn($b) => $b->position_code . '|' . $b->contract_type . '|' . $b->effective_from . '|' . $b->effective_to);
 
         return view('settings.index', compact('positions', 'brackets', 'bracketsGrouped'));
     }
@@ -81,6 +81,7 @@ class SettingsController extends Controller
             'max_kpi'         => 'nullable|numeric|gt:min_kpi',
             'commission_rate' => 'required|numeric|min:0|max:100',
             'effective_from'  => 'required|date',
+            'effective_to'    => 'nullable|date|after_or_equal:effective_from',
         ]);
 
         DB::table('commission_brackets')->insert([
@@ -90,12 +91,12 @@ class SettingsController extends Controller
             'max_kpi'         => $request->max_kpi ?: null,
             'commission_rate' => $request->commission_rate,
             'effective_from'  => $request->effective_from,
-            'effective_to'    => null,
+            'effective_to'    => $request->effective_to ?: null,
             'created_at'      => now(),
             'updated_at'      => now(),
         ]);
 
-        return back()->with('success', 'Đã thêm bracket hoa hồng mới');
+        return back()->with('success', 'Đã thêm mốc hoa hồng mới thành công');
     }
 
     // ── Xóa bracket ──────────────────────────────────────────────
@@ -106,13 +107,18 @@ class SettingsController extends Controller
     }
 
     // ── Xóa toàn bộ dòng brackets hoa hồng ───────────────────────
-    public function destroyGroup(string $positionCode, string $contractType)
+    public function destroyGroup(Request $request, string $positionCode, string $contractType)
     {
-        DB::table('commission_brackets')
+        $query = DB::table('commission_brackets')
             ->where('position_code', $positionCode)
-            ->where('contract_type', $contractType)
-            ->delete();
+            ->where('contract_type', $contractType);
 
-        return back()->with('success', "Đã xóa toàn bộ bảng hoa hồng của [{$positionCode}] loại HĐ [{$contractType}]");
+        if ($request->has('effective_from')) {
+            $query->where('effective_from', $request->query('effective_from'));
+        }
+
+        $query->delete();
+
+        return back()->with('success', "Đã xóa hàng hoa hồng của [{$positionCode}] loại HĐ [{$contractType}] thành công");
     }
 }

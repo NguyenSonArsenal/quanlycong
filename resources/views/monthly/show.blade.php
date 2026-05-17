@@ -67,15 +67,15 @@
         <table class="w-full text-left border-collapse text-sm">
             <thead class="bg-slate-800 text-white text-[9px] uppercase font-bold tracking-wider">
                 <tr>
-                    <th class="px-4 py-3 text-center w-16">Hạng</th>
-                    <th class="px-4 py-3">Nhân viên</th>
-                    <th class="px-4 py-3">Chức danh / HĐ</th>
-                    <th class="px-4 py-3 text-center">Công / Giờ</th>
-                    <th class="px-4 py-3 text-right">DT cá nhân</th>
-                    <th class="px-4 py-3 text-right">Target</th>
-                    <th class="px-4 py-3 text-right">Chênh lệch</th>
-                    <th class="px-4 py-3 text-center">KPI %</th>
-                    <th class="px-4 py-3 text-center">Chi tiết</th>
+                    <th class="px-3 py-2 text-center w-16">Hạng</th>
+                    <th class="px-3 py-2">Nhân viên</th>
+                    <th class="px-3 py-2">Chức danh / HĐ</th>
+                    <th class="px-3 py-2 text-center">Công / Giờ</th>
+                    <th class="px-3 py-2 text-right">DT cá nhân</th>
+                    <th class="px-3 py-2 text-right">Target</th>
+                    <th class="px-3 py-2 text-right">Chênh lệch</th>
+                    <th class="px-3 py-2 text-center">KPI %</th>
+                    <th class="px-3 py-2 text-center">Chi tiết</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -89,38 +89,38 @@
                     $diff     = $ed['total_revenue'] - $ed['total_target'];
                 @endphp
                 <tr class="{{ $loop->even ? 'bg-slate-50/40' : 'bg-white' }} hover:bg-blue-50/20 transition-colors">
-                    <td class="px-4 py-3 text-center font-black {{ $rank <= 3 ? 'text-2xl' : 'text-slate-400 text-xs' }}">
+                    <td class="px-3 py-2 text-center font-black {{ $rank <= 3 ? 'text-2xl' : 'text-slate-400 text-xs' }}">
                         {{ $rankIcon }}
                     </td>
-                    <td class="px-4 py-3">
+                    <td class="px-3 py-2">
                         <div class="font-bold text-slate-800">{{ $ed['user']->full_name }}</div>
                         <div class="text-[9px] text-slate-400 font-mono">{{ $ed['user']->username }}</div>
                     </td>
-                    <td class="px-4 py-3">
+                    <td class="px-3 py-2">
                         <div class="text-xs text-slate-600">{{ $ed['user']->position->name ?? '—' }}</div>
                         <span class="text-[8px] px-1.5 py-0.5 rounded font-bold {{ $ed['user']->contract_type === 'TV' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600' }}">
                             {{ $ed['user']->contract_type ?? 'CT' }}
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-center text-xs">
+                    <td class="px-3 py-2 text-center text-xs">
                         <span class="font-black text-slate-700">{{ $ed['work_days'] }}</span>
                         <span class="text-slate-400"> ng</span>
                         <span class="text-blue-600 font-bold ml-1">{{ number_format($ed['total_hours'], 1) }}h</span>
                     </td>
-                    <td class="px-4 py-3 text-right text-xs font-bold text-emerald-700">
+                    <td class="px-3 py-2 text-right text-xs font-bold text-emerald-700">
                         {{ $ed['is_sales'] && $ed['total_revenue'] > 0 ? number_format($ed['total_revenue'], 0, ',', '.') : '—' }}
                     </td>
-                    <td class="px-4 py-3 text-right text-xs text-slate-500">
+                    <td class="px-3 py-2 text-right text-xs text-slate-500">
                         {{ $ed['total_target'] > 0 ? number_format($ed['total_target'], 0, ',', '.') : '—' }}
                     </td>
-                    <td class="px-4 py-3 text-right text-xs font-bold {{ $diff >= 0 ? 'text-emerald-600' : 'text-rose-500' }}">
+                    <td class="px-3 py-2 text-right text-xs font-bold {{ $diff >= 0 ? 'text-emerald-600' : 'text-rose-500' }}">
                         @if($ed['is_sales'] && $ed['total_target'] > 0)
                             {{ ($diff >= 0 ? '+' : '') . number_format($diff, 0, ',', '.') }}
                         @else
                             <span class="text-slate-300">—</span>
                         @endif
                     </td>
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-3 py-2 text-center">
                         @if($ed['is_sales'])
                         <span class="px-2 py-0.5 rounded-full text-[10px] {{ $kpiColor }}">
                             {{ $ed['kpi_pct'] }}%
@@ -129,7 +129,7 @@
                         <span class="text-[9px] text-slate-400 italic">non-sales</span>
                         @endif
                     </td>
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-3 py-2 text-center">
                         <div class="flex items-center justify-center gap-1.5">
                             <a href="{{ route('fe.monthly.calendar', ['store' => $store->id, 'month' => $month, 'user_id' => $ed['user']->id]) }}"
                                 class="px-2 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-[10px] font-bold hover:bg-indigo-700 hover:text-white transition-all"

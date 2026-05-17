@@ -10,17 +10,17 @@ class PositionSeeder extends Seeder
     public function run()
     {
         $positions = [
-            ['name' => 'Quản lý cửa hàng', 'code' => 'QLCH', 'is_sales' => false, 'team_bonus_base' => 1000000],
-            ['name' => 'Phó quản lý', 'code' => 'CHP', 'is_sales' => false, 'team_bonus_base' => 500000],
-            ['name' => 'NV Bán hàng Full-time', 'code' => 'NVBH_FT', 'is_sales' => true, 'team_bonus_base' => 0],
-            ['name' => 'NV Bán hàng Part-time', 'code' => 'NVBH_PT', 'is_sales' => true, 'team_bonus_base' => 0],
-            ['name' => 'Nhân viên thu ngân', 'code' => 'NVTN', 'is_sales' => false, 'team_bonus_base' => 0],
-            ['name' => 'Nhân viên kho', 'code' => 'NVK', 'is_sales' => false, 'team_bonus_base' => 0],
-            ['name' => 'Bảo vệ', 'code' => 'NVBV', 'is_sales' => false, 'team_bonus_base' => 0],
+            ['code' => 'QLCH', 'name' => 'Quản lý cửa hàng', 'is_sales' => false, 'team_bonus_base' => 5000000, 'default_hourly_rate' => 0, 'default_contract_type' => 'CT'],
+            ['code' => 'CHP', 'name' => 'Phó quản lý', 'is_sales' => false, 'team_bonus_base' => 0, 'default_hourly_rate' => 50000, 'default_contract_type' => 'CT'],
+            ['code' => 'NVBH_FT', 'name' => 'Nhân viên bán hàng Full-time', 'is_sales' => true, 'team_bonus_base' => 0, 'default_hourly_rate' => 35000, 'default_contract_type' => 'CT'],
+            ['code' => 'NVBH_PT', 'name' => 'Nhân viên bán hàng Part-time', 'is_sales' => true, 'team_bonus_base' => 0, 'default_hourly_rate' => 25000, 'default_contract_type' => 'TV'],
+            ['code' => 'NVTN', 'name' => 'Nhân viên thu ngân', 'is_sales' => false, 'team_bonus_base' => 0, 'default_hourly_rate' => 30000, 'default_contract_type' => 'CT'],
+            ['code' => 'NVK', 'name' => 'Nhân viên kho', 'is_sales' => false, 'team_bonus_base' => 0, 'default_hourly_rate' => 28000, 'default_contract_type' => 'CT'],
+            ['code' => 'NVBV', 'name' => 'Bảo vệ', 'is_sales' => false, 'team_bonus_base' => 0, 'default_hourly_rate' => 25000, 'default_contract_type' => 'CT'],
         ];
 
-        foreach ($positions as $pos) {
-            Position::create($pos);
+        foreach ($positions as $p) {
+            Position::create($p);
         }
     }
 }

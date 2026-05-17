@@ -35,6 +35,7 @@ Route::prefix('staff-shift-kpi')->group(function () {
         Route::get('/monthly/{store}/revenue', [MonthlyController::class, 'revenue'])->name('monthly.revenue');
         Route::get('/monthly/{store}/calendar', [MonthlyController::class, 'calendar'])->name('monthly.calendar');
         Route::get('/monthly/{store}', [MonthlyController::class, 'show'])->name('monthly.show');
+        Route::post('/monthly/{store}/toggle-lock', [MonthlyController::class, 'toggleLockMonth'])->name('monthly.toggle-lock');
 
         // Payroll
         Route::get('/payrolls', [PayrollController::class, 'index'])->name('payrolls.index');
@@ -45,6 +46,7 @@ Route::prefix('staff-shift-kpi')->group(function () {
         // Stores
         Route::get('/stores', [StoreController::class, 'index'])->name('stores.index');
         Route::post('/stores', [StoreController::class, 'store'])->name('stores.store');
+        Route::put('/stores/{store}', [StoreController::class, 'update'])->name('stores.update');
         Route::delete('/stores/{store}', [StoreController::class, 'destroy'])->name('stores.destroy');
 
         // Staff (CRUD) — /staff thay vì /users theo spec
@@ -63,6 +65,8 @@ Route::prefix('staff-shift-kpi')->group(function () {
         Route::delete('/kpi-config/{id}', [KpiController::class, 'destroy'])->name('kpi-config.destroy');
         Route::post('/kpi-config/{id}/matrix', [KpiController::class, 'updateMatrix'])->name('kpi-config.update-matrix');
         Route::post('/kpi-config/{id}/regenerate', [KpiController::class, 'regenerate'])->name('kpi-config.regenerate');
+        Route::post('/kpi-config/{id}/lock-week', [KpiController::class, 'lockWeek'])->name('kpi-config.lock-week');
+        Route::post('/kpi-config/{id}/unlock-week', [KpiController::class, 'unlockWeek'])->name('kpi-config.unlock-week');
 
         // ── Admin: Phân quyền ──
         Route::get('/admin/permissions', [PermissionController::class, 'index'])->name('admin.permissions');

@@ -7,7 +7,7 @@ class CreateKpiConfigsTable extends Migration {
     public function up() {
         Schema::create('kpi_configs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('store_id')->constrained('stores')->onDelete('cascade');
+            $table->unsignedBigInteger('store_id');
             $table->string('month'); // YYYY-MM
             $table->decimal('total_target', 15, 2);
 
@@ -31,7 +31,7 @@ class CreateKpiConfigsTable extends Migration {
 
         Schema::create('daily_targets', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('kpi_config_id')->constrained('kpi_configs')->onDelete('cascade');
+            $table->unsignedBigInteger('kpi_config_id');
             $table->date('date');
             $table->integer('week_number')->default(1);    // Tuần 1-5 trong tháng
             $table->decimal('week_weight', 6, 2)->default(0); // % tỷ trọng tuần

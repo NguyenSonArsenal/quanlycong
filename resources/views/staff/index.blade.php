@@ -86,15 +86,15 @@
         <table class="w-full text-left border-collapse text-sm">
             <thead class="bg-slate-800 text-white text-[9px] uppercase font-bold tracking-wider">
                 <tr>
-                    <th class="px-4 py-3">#</th>
-                    <th class="px-4 py-3">Họ tên / Username</th>
-                    <th class="px-4 py-3">Cửa hàng</th>
-                    <th class="px-4 py-3">Chức danh</th>
-                    <th class="px-4 py-3 text-center">Vai trò</th>
-                    <th class="px-4 py-3 text-center">HĐ</th>
-                    <th class="px-4 py-3 text-right">Lương/h</th>
-                    <th class="px-4 py-3 text-center">Trạng thái</th>
-                    <th class="px-4 py-3 text-center">Thao tác</th>
+                    <th class="px-3 py-2">#</th>
+                    <th class="px-3 py-2">Họ tên / Username</th>
+                    <th class="px-3 py-2">Cửa hàng</th>
+                    <th class="px-3 py-2">Chức danh</th>
+                    <th class="px-3 py-2 text-center">Vai trò</th>
+                    <th class="px-3 py-2 text-center">HĐ</th>
+                    <th class="px-3 py-2 text-right">Lương/h</th>
+                    <th class="px-3 py-2 text-center">Trạng thái</th>
+                    <th class="px-3 py-2 text-center">Thao tác</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -104,36 +104,36 @@
                     $roleLabels = ['admin'=>'Admin','store_manager'=>'QLCH','staff'=>'NV'];
                 @endphp
                 <tr class="{{ $loop->even ? 'bg-slate-50/40' : 'bg-white' }} hover:bg-blue-50/20 transition-colors">
-                    <td class="px-4 py-3 text-slate-400 text-xs">{{ $users->firstItem() + $loop->index }}</td>
-                    <td class="px-4 py-3">
+                    <td class="px-3 py-2 text-slate-400 text-xs">{{ $users->firstItem() + $loop->index }}</td>
+                    <td class="px-3 py-2">
                         <div class="font-bold text-slate-800">{{ $u->full_name }}</div>
                         <div class="text-[10px] text-slate-400 font-mono">{{ $u->username }}</div>
                     </td>
-                    <td class="px-4 py-3 text-xs font-medium text-slate-600">
+                    <td class="px-3 py-2 text-xs font-medium text-slate-600">
                         {{ $u->store ? $u->store->code . ' – ' . $u->store->name : '—' }}
                     </td>
-                    <td class="px-4 py-3 text-xs text-slate-600">{{ $u->position->name ?? '—' }}</td>
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-3 py-2 text-xs text-slate-600">{{ $u->position->name ?? '—' }}</td>
+                    <td class="px-3 py-2 text-center">
                         <span class="px-2 py-0.5 rounded-full text-[9px] font-black {{ $roleColors[$u->role] ?? 'bg-slate-100 text-slate-500' }}">
                             {{ $roleLabels[$u->role] ?? $u->role }}
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-3 py-2 text-center">
                         <span class="px-1.5 py-0.5 rounded text-[9px] font-bold {{ $u->contract_type === 'TV' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700' }}">
                             {{ $u->contract_type ?? 'CT' }}
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-right font-mono text-xs">
+                    <td class="px-3 py-2 text-right font-mono text-xs">
                         {{ $u->hourly_rate > 0 ? number_format($u->hourly_rate, 0, ',', '.') . 'đ' : '—' }}
                     </td>
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-3 py-2 text-center">
                         @if($u->status)
                         <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700">Đang làm</span>
                         @else
                         <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-slate-100 text-slate-500">Nghỉ việc</span>
                         @endif
                     </td>
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-3 py-2 text-center">
                         <div class="flex items-center justify-center gap-2 flex-wrap">
                             @if(in_array(auth()->user()->role, ['admin','store_manager']))
                             <a href="{{ route('fe.profile', ['user_id' => $u->id, 'month' => date('Y-m')]) }}"

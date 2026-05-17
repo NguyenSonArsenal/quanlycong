@@ -17,6 +17,7 @@ class KpiConfig extends Model
         'daily_ratios',
         'shift_ratios_weekday',
         'shift_ratios_weekend',
+        'locked_weeks',
     ];
 
     protected $casts = [
@@ -24,6 +25,7 @@ class KpiConfig extends Model
         'daily_ratios'         => 'array',
         'shift_ratios_weekday' => 'array',
         'shift_ratios_weekend' => 'array',
+        'locked_weeks'         => 'array',
     ];
 
     public function store()

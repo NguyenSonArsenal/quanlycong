@@ -49,9 +49,9 @@ class KpiController extends Controller
         try {
             // Tỷ trọng ngày mặc định: T2-T5 (early) vs T6-CN (late)
             // Sử dụng ratio từ form để tính tỷ trọng 7 ngày trong tuần
-            // daily_ratios l\u01b0u % t\u1eebng lo\u1ea1i ng\u00e0y (t\u1ef7 l\u1ec7 \u0111\u00fang l\u00e0 \u0111\u1ee7)
-            $earlyPct = max(0.01, (float)($request->input('day_weights.1', 50)));
-            $latePct  = max(0.01, (float)($request->input('day_weights.5', 50)));
+            // daily_ratios lưu % từ từng loại ngày (tỷ lệ đúng là đủ)
+            $earlyPct = max(0.01, (float)($request->input('day_weights.1', config('config.default_weights.weekday', 45))));
+            $latePct  = max(0.01, (float)($request->input('day_weights.5', config('config.default_weights.weekend', 55))));
             $dailyRatios = [
                 1 => $earlyPct, 2 => $earlyPct, 3 => $earlyPct, 4 => $earlyPct,
                 5 => $latePct,  6 => $latePct,  7 => $latePct,
@@ -185,6 +185,16 @@ class KpiController extends Controller
             ->groupBy('date')
             ->pluck('actual', 'date');
 
+        // ── Các ngày đã khóa trong tháng ──
+        $lockedDates = ShiftRecord::where('store_id', $config->store_id)
+            ->where('date', 'like', $config->month . '%')
+            ->where('is_locked', true)
+            ->distinct()
+            ->pluck('date')
+            ->map(fn($d) => \Carbon\Carbon::parse($d)->format('d/m'))
+            ->flip()
+            ->toArray(); // ['11/05' => 0, '12/05' => 1, ...]
+
         // ── Dữ liệu cho switcher ──
         $stores  = Store::orderBy('code')->get();
         $configs = KpiConfig::with('store')->orderBy('month', 'desc')->get();
@@ -192,8 +202,181 @@ class KpiController extends Controller
         return view('kpis.show', compact(
             'config', 'weeks', 'actualByDate',
             'dailyRatios', 'weeklyRatios',
-            'stores', 'configs'
+            'stores', 'configs', 'lockedDates'
         ));
+    }
+
+    // ── Khóa tuần → rebalance KPI các tuần còn lại trong tháng ──
+    // ── Khóa tuần → rebalance KPI các tuần còn lại trong tháng ──
+    public function lockWeek(Request $request, $id)
+    {
+        $config = KpiConfig::findOrFail($id);
+        $weekNo = (int)$request->week_number; // 1-5
+
+        $lockedWeeks = $config->locked_weeks ?? [];
+        if (!in_array($weekNo, $lockedWeeks)) {
+            $lockedWeeks[] = $weekNo;
+        }
+
+        $config->locked_weeks = $lockedWeeks;
+        $config->save();
+
+        // Tái phân bổ
+        $this->rebalanceAllWeeks($config);
+
+        // Lấy lại dữ liệu sau khi rebalance để trả về UI
+        $allTargets = DailyTarget::where('kpi_config_id', $id)->orderBy('date')->get();
+
+        $weekByDate = [];
+        $wn = 1;
+        $cur = Carbon::parse($config->month . '-01');
+        $monthEnd = $cur->copy()->endOfMonth();
+        while ($cur->lte($monthEnd)) {
+            $weekByDate[$cur->toDateString()] = $wn;
+            if ($cur->isoWeekday() === 7 && $wn < 5) { $wn++; }
+            $cur->addDay();
+        }
+
+        $currWDates = $allTargets->filter(fn($t) => ($weekByDate[$t->date] ?? 0) === $weekNo)->pluck('date')->toArray();
+        $actualThisWeek = \App\Models\ShiftRecord::where('store_id', $config->store_id)
+            ->whereIn('date', $currWDates)
+            ->sum('personal_revenue');
+        $targetThisWeek = $allTargets->filter(fn($t) => ($weekByDate[$t->date] ?? 0) === $weekNo)
+            ->sum(fn($t) => ($t->rebalanced_target && $t->rebalanced_target > 0) ? $t->rebalanced_target : $t->target_amount);
+        $diff = $actualThisWeek - $targetThisWeek;
+
+        $futureWeeks = collect(range($weekNo + 1, 5))->filter(fn($w) => isset($config->weekly_ratios[$w]));
+
+        return response()->json([
+            'status'          => 'success',
+            'week'            => $weekNo,
+            'actual'          => $actualThisWeek,
+            'target'          => $targetThisWeek,
+            'diff'            => $diff,
+            'future_weeks'    => $futureWeeks->values(),
+        ]);
+    }
+
+    // ── Mở khóa tuần → rebalance KPI các tuần còn lại ──
+    public function unlockWeek(Request $request, $id)
+    {
+        $config = KpiConfig::findOrFail($id);
+        $weekNo = (int)$request->week_number; // 1-5
+
+        $lockedWeeks = $config->locked_weeks ?? [];
+        $lockedWeeks = array_values(array_diff($lockedWeeks, [$weekNo]));
+
+        $config->locked_weeks = $lockedWeeks;
+        $config->save();
+
+        // Tái phân bổ lại tất cả các tuần từ đầu dựa trên cấu hình locked_weeks mới
+        $this->rebalanceAllWeeks($config);
+
+        return response()->json([
+            'status' => 'success',
+            'week'   => $weekNo,
+        ]);
+    }
+
+    // Helper dùng chung để tái phân bổ KPI cho các tuần tương lai
+    private function rebalanceAllWeeks(KpiConfig $config)
+    {
+        $id = $config->id;
+
+        // Lấy daily_ratios và weekly_ratios
+        $dailyRatios = [];
+        foreach (($config->daily_ratios ?? []) as $k => $v) {
+            $dailyRatios[(int)$k] = (float)$v;
+        }
+        $weeklyRatios = [];
+        foreach (($config->weekly_ratios ?? []) as $k => $v) {
+            $weeklyRatios[(int)$k] = (float)$v;
+        }
+
+        $monthlyTotal = (float)$config->total_target;
+        $allTargets = DailyTarget::where('kpi_config_id', $id)->orderBy('date')->get();
+
+        // Map ngày → tuần
+        $weekByDate = [];
+        $wn = 1;
+        $cur = Carbon::parse($config->month . '-01');
+        $monthEnd = $cur->copy()->endOfMonth();
+        while ($cur->lte($monthEnd)) {
+            $weekByDate[$cur->toDateString()] = $wn;
+            if ($cur->isoWeekday() === 7 && $wn < 5) { $wn++; }
+            $cur->addDay();
+        }
+
+        $lockedWeeks = $config->locked_weeks ?? [];
+        $maxLockedWeek = count($lockedWeeks) > 0 ? max($lockedWeeks) : 0;
+
+        // Các ngày đã khóa công
+        $lockedDates = \App\Models\ShiftRecord::where('store_id', $config->store_id)
+            ->where('date', 'like', $config->month . '%')
+            ->where('is_locked', true)
+            ->distinct()
+            ->pluck('date')
+            ->toArray();
+
+        // 1. Tính contribution của các tuần <= $maxLockedWeek
+        $pastContribution = 0;
+        for ($w = 1; $w <= 5; $w++) {
+            $wDates = $allTargets->filter(fn($t) => ($weekByDate[$t->date] ?? 0) === $w)->pluck('date')->toArray();
+            if (in_array($w, $lockedWeeks)) {
+                // Đã khóa -> dùng doanh thu thực tế
+                $actualW = \App\Models\ShiftRecord::where('store_id', $config->store_id)
+                    ->whereIn('date', $wDates)
+                    ->sum('personal_revenue');
+                $pastContribution += $actualW;
+            } elseif ($w <= $maxLockedWeek) {
+                // Đã qua nhưng không khóa -> dùng target hiện tại của nó
+                $targetW = $allTargets->filter(fn($t) => ($weekByDate[$t->date] ?? 0) === $w)
+                    ->sum(fn($t) => ($t->rebalanced_target && $t->rebalanced_target > 0) ? $t->rebalanced_target : $t->target_amount);
+                $pastContribution += $targetW;
+            }
+        }
+
+        // 2. KPI còn lại cho các tuần tương lai (> $maxLockedWeek)
+        $futureKPI = $monthlyTotal - $pastContribution;
+
+        // 3. Phân bổ cho các tuần tương lai
+        $futureWeeks = collect(range($maxLockedWeek + 1, 5))->filter(fn($w) => isset($weeklyRatios[$w]));
+        $totalFutureWeight = $futureWeeks->sum(fn($w) => $weeklyRatios[$w] ?? 0);
+
+        foreach (range(1, 5) as $w) {
+            $wDates = $allTargets->filter(fn($t) => ($weekByDate[$t->date] ?? 0) === $w);
+            if ($w <= $maxLockedWeek) {
+                // Các tuần đã qua hoặc đã khóa: giữ nguyên chỉ tiêu, không ghi đè rebalanced_target
+                // Chỉ đảm bảo rebalanced_target có giá trị hợp lệ nếu chưa có
+                foreach ($wDates as $ft) {
+                    if (in_array($ft->date, $lockedDates)) {
+                        continue;
+                    }
+                    if (is_null($ft->rebalanced_target) || $ft->rebalanced_target <= 0) {
+                        $ft->rebalanced_target = $ft->target_amount;
+                        $ft->save();
+                    }
+                }
+            } else {
+                // Tuần tương lai: phân bổ lại theo tỉ lệ mới
+                $wRatio = $weeklyRatios[$w] ?? 0;
+                $newWeekTarget = $totalFutureWeight > 0 ? $futureKPI * $wRatio / $totalFutureWeight : 0;
+
+                $weekDayTotal = $wDates->sum(function($d) use ($dailyRatios) {
+                    return $dailyRatios[Carbon::parse($d->date)->isoWeekday()] ?? 1.0;
+                });
+
+                foreach ($wDates as $ft) {
+                    if (in_array($ft->date, $lockedDates)) {
+                        continue;
+                    }
+                    $dow = Carbon::parse($ft->date)->isoWeekday();
+                    $dayRatio = $dailyRatios[$dow] ?? 1.0;
+                    $ft->rebalanced_target = $weekDayTotal > 0 ? round($newWeekTarget * $dayRatio / $weekDayTotal, 2) : 0;
+                    $ft->save();
+                }
+            }
+        }
     }
 
     // Tính lại toàn bộ daily_targets từ config hiện tại

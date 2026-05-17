@@ -27,7 +27,16 @@ class UserController extends Controller
         if ($request->filled('role'))        $query->where('role', $request->role);
         if ($request->filled('status'))      $query->where('status', $request->status);
 
-        $users     = $query->orderBy('store_id')->orderBy('full_name')->paginate(20)->withQueryString();
+        $users     = $query->select('users.*')
+            ->leftJoin('stores', 'users.store_id', '=', 'stores.id')
+            ->leftJoin('positions', 'users.position_id', '=', 'positions.id')
+            ->orderByRaw('CASE WHEN users.store_id IS NULL THEN 0 ELSE 1 END')
+            ->orderBy('stores.code', 'asc')
+            ->orderByRaw('CASE WHEN users.position_id IS NULL THEN 0 ELSE 1 END')
+            ->orderBy('positions.id', 'asc')
+            ->orderBy('users.full_name', 'asc')
+            ->paginate(20)
+            ->withQueryString();
         $stores    = Store::orderBy('code')->get();
         $positions = Position::orderBy('name')->get();
 

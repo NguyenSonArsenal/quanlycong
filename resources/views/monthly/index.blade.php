@@ -1,6 +1,19 @@
 @extends('layouts.app')
 @section('title', 'Tổng quan tháng ' . $month)
+@section('has_local_alert', true)
 @section('content')
+
+{{-- Custom Local Alerts --}}
+@if(session('success'))
+<div class="mb-4 p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-xl text-xs font-bold text-emerald-800 shadow-sm flex items-center gap-2">
+    <span>{{ session('success') }}</span>
+</div>
+@endif
+@if(session('error'))
+<div class="mb-4 p-4 bg-rose-50 border-l-4 border-rose-500 rounded-xl text-xs font-bold text-rose-800 shadow-sm flex items-center gap-2">
+    <span>{{ session('error') }}</span>
+</div>
+@endif
 
 {{-- ── Header ── --}}
 <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
@@ -97,11 +110,162 @@
 </form>
 
 @if(!$storeId)
-{{-- Chưa chọn store —→ hướng dẫn --}}
-<div class="bg-white rounded-2xl border border-slate-100 shadow-sm px-8 py-20 text-center">
-    <div class="text-5xl mb-4">🏪</div>
-    <p class="text-slate-500 font-bold text-lg">Chọn cửa hàng để xem bảng công</p>
-    <p class="text-xs text-slate-300 mt-2">Dữ liệu sẽ hiển thị theo tháng và có thể lọc theo từng nhân viên</p>
+{{-- BẢNG GIÁM SÁT & CHỐT DOANH THU TOÀN CHUỖI --}}
+<div class="mb-6">
+    <h2 class="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">📊 Bảng giám sát & Đối chiếu doanh thu</h2>
+    
+    {{-- Grid metric tổng --}}
+    @php
+        $totalTgt = collect($storeSummaries)->sum('target');
+        $totalRep = collect($storeSummaries)->sum('reported_revenue');
+        $totalApi = collect($storeSummaries)->sum('api_revenue');
+        $totalPct = $totalTgt > 0 ? round($totalRep / $totalTgt * 100, 1) : 0;
+    @endphp
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Target Toàn Chuỗi</p>
+            <p class="font-black text-xl text-slate-700">{{ $totalTgt > 0 ? number_format($totalTgt/1e6, 1).'M' : '—' }}</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">DT Thực Tế (Nhập tay)</p>
+            <p class="font-black text-xl text-emerald-700">{{ number_format($totalRep/1e6, 1) }}M</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">DT Thực Tế (POS/API)</p>
+            <p class="font-black text-xl text-indigo-700">{{ number_format($totalApi/1e6, 1) }}M</p>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Hiệu Suất Chuỗi</p>
+            <p class="font-black text-xl text-blue-700">{{ $totalPct }}%</p>
+        </div>
+    </div>
+
+    {{-- Bảng chi tiết đối chiếu cửa hàng --}}
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                🏪 Đối chiếu & Khoá dữ liệu doanh thu
+            </h3>
+            <span class="text-[10px] text-slate-400 font-bold">Tháng {{ $month }}</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead class="bg-slate-800 text-white text-[9px] uppercase font-bold tracking-wider">
+                    <tr>
+                        <th class="px-5 py-3">Cửa hàng</th>
+                        <th class="px-4 py-3 text-right">Target</th>
+                        <th class="px-4 py-3 text-right">DT Nhập Tay</th>
+                        <th class="px-4 py-3 text-right bg-slate-900/10">DT API (Nhanh.vn)</th>
+                        <th class="px-4 py-3 text-center">Hoàn Thành KPI</th>
+                        <th class="px-4 py-3 text-center">Cờ Chênh Lệch (>5%)</th>
+                        <th class="px-4 py-3 text-center">Khoá Tháng (Admin/HR)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @foreach($storeSummaries as $sum)
+                    @php
+                        $st = $sum['store'];
+                        $kpiPctColor = $sum['kpi_pct'] >= 100 ? 'text-emerald-600 font-black' : ($sum['kpi_pct'] >= 90 ? 'text-amber-500 font-bold' : 'text-rose-500');
+                    @endphp
+                    <tr class="hover:bg-blue-50/10 transition-colors">
+                        {{-- Cửa hàng --}}
+                        <td class="px-5 py-3.5">
+                            <a href="{{ route('fe.monthly.index', ['store_id' => $st->id, 'month' => $month]) }}" class="font-bold text-indigo-600 hover:text-indigo-800 text-xs flex items-center gap-1.5">
+                                🏪 {{ $st->name }}
+                                <span class="px-2 py-0.5 border border-slate-200 bg-slate-50 rounded text-[9px] font-black text-slate-500 uppercase tracking-wider">
+                                    {{ $st->code }}
+                                </span>
+                            </a>
+                        </td>
+                        
+                        {{-- Target --}}
+                        <td class="px-4 py-3.5 text-right font-mono text-xs text-slate-500">
+                            {{ $sum['target'] > 0 ? number_format($sum['target'], 0, ',', '.') . 'đ' : '—' }}
+                        </td>
+
+                        {{-- DT Nhập tay --}}
+                        <td class="px-4 py-3.5 text-right font-mono text-xs font-bold text-emerald-700">
+                            {{ number_format($sum['reported_revenue'], 0, ',', '.') }}đ
+                        </td>
+
+                        {{-- DT API --}}
+                        <td class="px-4 py-3.5 text-right font-mono text-xs font-bold text-indigo-700 bg-slate-50/50">
+                            {{ number_format($sum['api_revenue'], 0, ',', '.') }}đ
+                        </td>
+
+                        {{-- Hoàn thành KPI --}}
+                        <td class="px-4 py-3.5 text-center">
+                            @if($sum['target'] > 0)
+                            <span class="text-xs {{ $kpiPctColor }}">{{ $sum['kpi_pct'] }}%</span>
+                            <div class="w-24 bg-slate-100 rounded-full h-1 mt-1 mx-auto">
+                                <div class="h-1 rounded-full {{ $sum['kpi_pct'] >= 100 ? 'bg-emerald-500' : ($sum['kpi_pct'] >= 90 ? 'bg-amber-400' : 'bg-rose-400') }}"
+                                    style="width: {{ min(100, $sum['kpi_pct']) }}%"></div>
+                            </div>
+                            @else
+                            <span class="text-xs text-slate-400 italic">—</span>
+                            @endif
+                        </td>
+
+                        {{-- Cờ chênh lệch --}}
+                        <td class="px-4 py-3.5 text-center">
+                            @if($sum['reported_revenue'] > 0)
+                                @if($sum['is_discrepancy'])
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-100 text-[10px] font-black text-rose-600 animate-pulse" title="Lệch quá 5% cho phép!">
+                                    🚨 Lệch {{ $sum['diff_pct'] }}%
+                                </span>
+                                @else
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-600">
+                                    ✅ Khớp ({{ $sum['diff_pct'] }}%)
+                                </span>
+                                @endif
+                            @else
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-[10px] text-slate-400">
+                                No data
+                            </span>
+                            @endif
+                        </td>
+
+                        {{-- Khoá tháng --}}
+                        <td class="px-4 py-3.5 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                @if($sum['is_month_locked'])
+                                <span class="px-2 py-1 bg-rose-50 border border-rose-100 rounded-lg text-[10px] font-black text-rose-600 flex items-center gap-1">
+                                    🔒 Đã khoá
+                                </span>
+                                @else
+                                <span class="px-2 py-1 bg-emerald-50 border border-emerald-100 rounded-lg text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                                    🔓 Mở
+                                </span>
+                                @endif
+
+                                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'store_manager')
+                                <form action="{{ route('fe.monthly.toggle-lock', $st->id) }}" method="POST" class="inline">
+                                    @csrf
+                                    <input type="hidden" name="month" value="{{ $month }}">
+                                    @if($sum['is_month_locked'])
+                                    <input type="hidden" name="action" value="unlock">
+                                    <button type="submit" onclick="return confirm('Mở khoá bảng công toàn bộ cửa hàng {{ $st->name }} trong tháng {{ $month }}?')" 
+                                            class="px-2 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 text-[10px] font-bold rounded-lg active:scale-95 transition-all">
+                                        🔓 Mở khoá
+                                    </button>
+                                    @else
+                                    <input type="hidden" name="action" value="lock">
+                                    <button type="submit" onclick="return confirm('Khoá bảng công toàn bộ cửa hàng {{ $st->name }} trong tháng {{ $month }}? Mọi ca làm sẽ ở chế độ Read-only.')"
+                                            class="px-2 py-1 bg-slate-900 hover:bg-rose-600 text-white text-[10px] font-bold rounded-lg active:scale-95 transition-all">
+                                        🔒 Khoá tháng
+                                    </button>
+                                    @endif
+                                </form>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 @else
 

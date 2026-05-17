@@ -13,13 +13,13 @@ class CreateUsersTable extends Migration {
             $table->string('full_name');
             $table->string('role');
             
-            $table->foreignId('store_id')->nullable()->constrained('stores');
-            $table->foreignId('position_id')->nullable()->constrained('positions');
+            $table->unsignedBigInteger('store_id')->nullable();
+            $table->unsignedBigInteger('position_id')->nullable();
             
             $table->string('contract_type')->nullable();
             $table->decimal('hourly_rate', 15, 2)->default(0);
             
-            $table->integer('status')->default(1);
+            $table->integer('status')->default(1)->comment('1: active, 2: nghỉ việc');
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

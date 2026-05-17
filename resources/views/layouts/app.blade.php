@@ -32,6 +32,9 @@
                 <a href="{{ route('fe.users.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/staff*') ? 'bg-slate-800 text-rose-500' : '' }}">
                     👥 Nhân sự
                 </a>
+                <a href="{{ route('fe.settings.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/settings*') ? 'bg-slate-800 text-rose-500' : '' }}">
+                    🛠️ Cài đặt catalog
+                </a>
 
                 <div class="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nghiệp vụ</div>
                 <a href="{{ route('fe.kpi-config.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/kpi-config*') ? 'bg-slate-800 text-rose-500' : '' }}">
@@ -48,9 +51,6 @@
                 <div class="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Quản trị</div>
                 <a href="{{ route('fe.admin.permissions') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/admin/permissions*') ? 'bg-slate-800 text-rose-500' : '' }}">
                     🔐 Phân quyền
-                </a>
-                <a href="{{ route('fe.settings.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/settings*') ? 'bg-slate-800 text-rose-500' : '' }}">
-                    🛠️ Cài đặt catalog
                 </a>
                 @endif
             </nav>
@@ -69,13 +69,13 @@
 
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden">
-            <header class="h-16 bg-white border-b flex items-center justify-between px-8">
+            <header class="h-16 bg-white border-b flex items-center justify-between px-6">
                 <h2 class="text-lg font-semibold text-slate-800">@yield('title')</h2>
                 <div class="flex items-center gap-4">
                     <span class="text-sm text-slate-500">{{ now()->format('d/m/Y') }}</span>
                 </div>
             </header>
-            <main class="flex-1 overflow-x-hidden overflow-y-auto p-8">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto p-5">
                 @if(session('success') && !View::hasSection('has_local_alert'))
                     <div class="mb-6 bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg text-emerald-700">
                         {{ session('success') }}

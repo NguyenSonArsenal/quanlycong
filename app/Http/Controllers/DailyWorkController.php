@@ -84,6 +84,16 @@ class DailyWorkController extends Controller
         $field = $request->field;
         $val   = $request->value ?? 0;
 
+        if ($field === 'hours' && $val > 0) {
+            $val = (float)$val;
+            if ($val < 0.5 || $val > 6 || fmod($val, 0.5) != 0) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Giờ công mỗi ca phải từ 0.5 đến 6 và chia hết cho 0.5!'
+                ], 422);
+            }
+        }
+
         if (in_array($field, self::KPI_FIELDS)) {
             // Số liệu phụ → lưu vào employee_daily_kpi
             EmployeeDailyKpi::updateOrCreate(
@@ -176,13 +186,30 @@ class DailyWorkController extends Controller
         }
     }
 
-    // ── Khóa ngày ──
+    // ── Khóa ngày → tự động rebalance KPI các ngày còn lại trong tuần ──
     public function lock(Request $request)
     {
-        ShiftRecord::where('store_id', $request->store_id)
-            ->where('date', $request->date)
+        $storeId = $request->store_id;
+        $date    = $request->date;
+
+        // 1. Khóa toàn bộ shift records của ngày
+        ShiftRecord::where('store_id', $storeId)
+            ->where('date', $date)
             ->update(['is_locked' => true]);
-        return response()->json(['status' => 'success']);
+
+        // 2. Lấy tổng doanh thu thực tế hôm nay từ shift_records
+        $actualRevenue = ShiftRecord::where('store_id', $storeId)
+            ->where('date', $date)
+            ->sum('personal_revenue');
+
+        // 3. Tái phân bổ KPI các ngày còn lại trong tuần
+        $this->rebalanceWeekly($storeId, $date, $actualRevenue);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Đã khóa ngày và tái phân bổ KPI tuần.',
+            'actual_revenue' => $actualRevenue,
+        ]);
     }
 
     // ─────────── Private helpers ───────────
@@ -290,27 +317,49 @@ class DailyWorkController extends Controller
 
     private function rebalanceWeekly($storeId, $date, $actualRevenue)
     {
-        $carbonDate    = Carbon::parse($date);
-        $weeklyTargets = DailyTarget::whereHas('kpiConfig', fn($q) => $q->where('store_id', $storeId))
-            ->whereBetween('date', [
-                $carbonDate->copy()->startOfWeek()->toDateString(),
-                $carbonDate->copy()->endOfWeek()->toDateString(),
-            ])->get();
+        $carbonDate = Carbon::parse($date);
+        $weekStart  = $carbonDate->copy()->startOfWeek()->toDateString();
+        $weekEnd    = $carbonDate->copy()->endOfWeek()->toDateString();
+
+        // Lấy KpiConfig để đọc daily_ratios thực tế từ DB
+        $kpiConfig = \App\Models\KpiConfig::where('store_id', $storeId)
+            ->where('month', $carbonDate->format('Y-m'))
+            ->first();
+
+        // Lấy daily_ratios: {1: 40, 2: 40, ..., 5: 60, 6: 60, 7: 60}
+        // key = isoWeekday (1=T2...7=CN), value = trọng số ngày đó
+        $dailyRatios = [];
+        foreach (($kpiConfig->daily_ratios ?? []) as $k => $v) {
+            $dailyRatios[(int)$k] = (float)$v;
+        }
+
+        // Chỉ lấy daily targets trong tuần hiện tại
+        $weeklyTargets = DailyTarget::where('kpi_config_id', $kpiConfig->id)
+            ->whereBetween('date', [$weekStart, $weekEnd])
+            ->get();
 
         $weeklyTotal = $weeklyTargets->sum('target_amount');
-        $pastActual  = ShiftRecord::where('store_id', $storeId)
-            ->whereBetween('date', [$carbonDate->copy()->startOfWeek()->toDateString(), $date])
-            ->select('date', DB::raw('SUM(DISTINCT shift_revenue) as daily_total'))
-            ->groupBy('date')->get()->sum('daily_total');
 
+        // Tính DT thực tế từ đầu tuần đến ngày bị khóa (personal_revenue vì NV nhập tay)
+        $pastActual = ShiftRecord::where('store_id', $storeId)
+            ->whereBetween('date', [$weekStart, $date])
+            ->sum('personal_revenue');
+
+        // KPI còn lại cần đạt trong các ngày tới
         $remaining  = max(0, $weeklyTotal - $pastActual);
         $futureDays = $weeklyTargets->where('date', '>', $date);
 
         if ($futureDays->count() > 0) {
-            $totalW = $futureDays->sum(fn($d) => Carbon::parse($d->date)->isoWeekday() >= 6 ? 1.5 : 1.0);
+            // Tổng trọng số các ngày còn lại, lấy từ daily_ratios trong config
+            $totalW = $futureDays->sum(function ($d) use ($dailyRatios) {
+                $dow = Carbon::parse($d->date)->isoWeekday();
+                return $dailyRatios[$dow] ?? 1.0;
+            });
+
             foreach ($futureDays as $ft) {
-                $w = Carbon::parse($ft->date)->isoWeekday() >= 6 ? 1.5 : 1.0;
-                $ft->rebalanced_target = $totalW > 0 ? ($remaining * $w / $totalW) : 0;
+                $dow = Carbon::parse($ft->date)->isoWeekday();
+                $w   = $dailyRatios[$dow] ?? 1.0;
+                $ft->rebalanced_target = $totalW > 0 ? round($remaining * $w / $totalW, 2) : 0;
                 $ft->save();
             }
         }

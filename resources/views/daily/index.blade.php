@@ -43,7 +43,7 @@
             <div class="text-sm font-black {{ $kpiStorePct >= 100 ? 'text-emerald-600' : ($kpiStorePct >= 80 ? 'text-amber-500' : 'text-rose-500') }}">
                 <span id="stat-kpi-pct">{{ $kpiStorePct }}</span>%
             </div>
-            <div class="text-[9px] text-slate-400 mt-0.5">Target: {{ number_format($kpiTarget/1e6, 1) }}M</div>
+            <div class="text-[9px] text-slate-400 mt-0.5" title="{{ number_format($kpiTarget, 0, ',', '.') }}đ">Target: <span class="font-bold text-slate-600">{{ number_format($kpiTarget, 0, ',', '.') }}đ</span></div>
         </div>
         {{-- Tổng DT cửa hàng --}}
         <div class="px-5 py-4">
@@ -68,20 +68,10 @@
     {{-- Action bar (QLCH only) --}}
     @if($isManager && !$isLocked)
     <div class="flex flex-wrap items-center gap-3 px-5 py-3 bg-slate-50 border-t border-slate-100">
-        <div class="flex items-center gap-2 flex-1">
-            <label class="text-[10px] font-bold text-slate-500 uppercase whitespace-nowrap">Tổng DT CH:</label>
-            <input type="text" inputmode="numeric" id="total_revenue_input" placeholder="0"
-                class="w-44 px-3 py-1.5 rounded-lg border-2 border-amber-200 font-bold text-amber-700 outline-none text-sm focus:border-amber-400"
-                value="{{ $storeRev > 0 ? number_format($storeRev, 0, ',', '.') : '' }}"
-                onfocus="unfmtInput(this)" onblur="fmtInput(this)">
-            <button onclick="equalizeKPI()"
-                class="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-white rounded-lg font-bold text-xs shadow transition-all">
-                ⚡ Cân bằng KPI
-            </button>
-        </div>
+        <p class="text-[10px] text-slate-400 flex-1">Khi khóa ngày, hệ thống sẽ tự <strong>tái phân bổ KPI</strong> các ngày còn lại trong tuần theo doanh thu thực tế hôm nay.</p>
         <button onclick="lockDay()"
             class="px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-bold text-xs shadow transition-all ml-auto">
-            🔒 Khóa ngày
+            🔒 Khóa ngày & Rebalance
         </button>
     </div>
     @endif
@@ -116,7 +106,7 @@
                 <th class="px-2 py-2 border-r border-slate-600 w-12">SP</th>
                 <th class="px-2 py-2 border-r border-rose-700 w-28 text-rose-300">Tổng DT</th>
                 <th class="px-2 py-2 w-16 text-rose-300">SP/Bill</th>
-                @if($isManager && !$isLocked)<th></th>@endif
+                {{-- Không render thêm th nào ở đây — cột xóa đã dùng rowspan="2" từ row trên --}}
             </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
@@ -147,10 +137,11 @@
             @foreach(['morning','afternoon','evening'] as $shift)
             <td class="px-1 py-1.5 border-r border-slate-100 bg-blue-50/30">
                 @if(!$isLocked)
-                <input type="number" step="0.5" min="0" max="12"
+                <input type="number" step="0.5" min="0.5" max="6"
                     class="w-full text-center text-xs font-bold py-1 rounded outline-none focus:bg-blue-100 bg-transparent text-blue-700 transition-all"
                     value="{{ $user->shifts[$shift]->hours ?? '' }}"
                     data-user-id="{{ $user->id }}" data-shift="{{ $shift }}" data-field="hours"
+                    oninput="if(parseFloat(this.value)<0||this.value==='-')this.value=''"
                     onblur="saveField(this)" placeholder="–">
                 @else
                 <span class="block text-center text-xs font-bold text-blue-700">{{ $user->shifts[$shift]->hours ?? '–' }}</span>
@@ -158,14 +149,17 @@
             </td>
             @endforeach
 
-            {{-- DT cá nhân từng ca — chỉ enable khi ca đó có giờ công --}}
+            {{-- DT cá nhân từng ca — chỉ enable khi ca đó có giờ công VÀ là nhân viên sales --}}
             @foreach(['morning','afternoon','evening'] as $shift)
             @php
                 $dtVal    = isset($user->shifts[$shift]) && $user->shifts[$shift]->personal_revenue > 0 ? (int)round($user->shifts[$shift]->personal_revenue) : '';
                 $hasHours = isset($user->shifts[$shift]) && $user->shifts[$shift]->hours > 0;
             @endphp
             <td class="px-1 py-1.5 border-r border-slate-100 bg-emerald-50/20">
-                @if(!$isLocked)
+                @if(!$isSales)
+                    {{-- Non-sales: chỉ hiển thị dấu gạch, không cho nhập DT --}}
+                    <span class="block text-center text-[10px] text-slate-300 select-none">–</span>
+                @elseif(!$isLocked)
                 <input type="text" inputmode="numeric"
                     class="w-full text-right text-[10px] font-bold py-1 rounded outline-none bg-transparent text-emerald-700 transition-all
                            {{ $hasHours ? 'focus:bg-emerald-100 cursor-text' : 'opacity-30 cursor-not-allowed' }}"
@@ -182,10 +176,13 @@
             </td>
             @endforeach
 
-            {{-- Số liệu phụ — chỉ enable khi có ít nhất 1 ca có giờ --}}
+            {{-- Số liệu phụ — chỉ sales mới được nhập, non-sales hiển thị dấu gạch --}}
             @foreach(['customers'=>'KH','fitting_rooms'=>'Thử','orders'=>'Đơn','products'=>'SP'] as $field => $label)
             <td class="px-1 py-1.5 border-r border-slate-100">
-                @if(!$isLocked)
+                @if(!$isSales)
+                    {{-- Non-sales: chỉ hiển thị dấu gạch --}}
+                    <span class="block text-center text-[10px] text-slate-300 select-none">–</span>
+                @elseif(!$isLocked)
                 <input type="number" min="0"
                     class="w-full text-center text-[10px] font-bold py-1 rounded outline-none bg-transparent text-slate-600 transition-all
                            {{ $hasAnyHours ? 'focus:bg-slate-100 cursor-text' : 'opacity-30 cursor-not-allowed' }}"
@@ -199,28 +196,34 @@
             </td>
             @endforeach
 
-            {{-- KPI cá nhân --}}
-            <td class="px-3 py-3 text-center bg-amber-50 border-r border-amber-100 min-w-[140px]">
+            {{-- KPI cá nhân: chỉ hiện Target --}}
+            <td class="px-3 py-3 text-center bg-amber-50 border-r border-amber-100 min-w-[120px]">
                 @if($isSales)
-                <div class="kpi-pct font-black text-base {{ $kpiColor }}" id="kpi-pct-{{ $user->id }}">
-                    {{ $kd['kpiPct'] }}%
+                @if($kd['target'] > 0)
+                <div class="font-black text-sm text-slate-700 leading-tight" id="kpi-target-{{ $user->id }}">
+                    {{ number_format($kd['target'], 0, ',', '.') }}
                 </div>
-                <div class="text-[9px] text-slate-500 mt-0.5">
-                    T: <span id="kpi-target-{{ $user->id }}">{{ number_format($kd['target'], 0, ',', '.') }}</span>
-                </div>
-                <div class="text-[9px] font-bold text-emerald-600 mt-0.5" id="kpi-rev-{{ $user->id }}">
-                    {{ $kd['totalRev'] > 0 ? number_format($kd['totalRev'], 0, ',', '.') : '0' }}
-                </div>
+                @else
+                <span class="text-slate-300 text-xs" id="kpi-target-{{ $user->id }}">–</span>
+                @endif
+                {{-- Hidden elements giữ id để JS vẫn update được --}}
+                <span id="kpi-pct-{{ $user->id }}" class="hidden">{{ $kd['kpiPct'] }}</span>
+                <span id="kpi-rev-{{ $user->id }}" class="hidden">{{ $kd['totalRev'] }}</span>
                 @else
                 <span class="text-[8px] text-slate-300">–</span>
                 @endif
             </td>
 
-            {{-- Hiệu suất --}}
+            {{-- Hiệu suất: Tổng DT + % đạt bên dưới --}}
             <td class="px-3 py-3 text-right border-r border-slate-100">
                 <div class="font-black text-xs text-rose-600" id="kpi-total-rev-{{ $user->id }}">
                     {{ $kd['totalRev'] > 0 ? number_format($kd['totalRev'], 0, ',', '.') : '–' }}
                 </div>
+                @if($isSales && $kd['target'] > 0)
+                <div class="text-sm font-black mt-0.5 {{ $kpiColor }}" id="kpi-pct-rev-{{ $user->id }}">
+                    {{ $kd['kpiPct'] }}%
+                </div>
+                @endif
             </td>
             <td class="px-2 py-3 text-center">
                 <span class="text-[10px] font-bold text-slate-500" id="sp-bill-{{ $user->id }}">{{ $spBill }}</span>
@@ -288,8 +291,31 @@ function navigate() {
 
 // ── Save-on-blur — không reload ──
 async function saveField(el) {
-    const val   = el.value;
+    let val   = el.value;
     const field = el.dataset.field;
+
+    // Chặn số âm cho giờ công và số liệu phụ
+    if (field === 'hours' || ['customers','fitting_rooms','orders','products'].includes(field)) {
+        if (parseFloat(val) < 0 || val === '-') {
+            el.value = '';
+            val = '';
+        }
+    }
+
+    // Validate giờ công từ 0.5 -> 6, lẻ .5
+    if (field === 'hours' && val !== '') {
+        const h = parseFloat(val);
+        if (isNaN(h) || h < 0.5 || h > 6 || (h * 10) % 5 !== 0) {
+            Swal.fire({
+                title: 'Số giờ công không hợp lệ!',
+                html: 'Mỗi ca chỉ được nhập từ <b>0.5</b> đến <b>6</b> giờ công,<br>và chỉ cho phép nhập lẻ <b>.5</b> (Ví dụ: 1.5, 2, 2.5...).',
+                icon: 'warning',
+                confirmButtonColor: '#3b82f6'
+            });
+            el.value = el.dataset.prev || '';
+            return;
+        }
+    }
 
     // Với giờ công: cho phép gửi khi val rỗng (để backend xóa bản ghi)
     // Các field khác: bỏ qua nếu rỗng hoặc không đổi
@@ -313,6 +339,19 @@ async function saveField(el) {
             })
         });
         const data = await res.json();
+
+        if (!res.ok || data.status === 'error') {
+            Swal.fire({
+                title: 'Lỗi lưu dữ liệu!',
+                text: data.message || 'Có lỗi xảy ra khi cập nhật.',
+                icon: 'error',
+                confirmButtonColor: '#ef4444'
+            });
+            el.value = el.dataset.prev || '';
+            el.style.outline = '2px solid #ef4444';
+            setTimeout(() => el.style.outline = '', 2000);
+            return;
+        }
 
         el.style.outline = '2px solid #10b981';
         setTimeout(() => el.style.outline = '', 1200);
@@ -441,6 +480,18 @@ async function fmtAndSave(el) {
             })
         });
         const data = await res.json();
+        if (!res.ok || data.status === 'error') {
+            Swal.fire({
+                title: 'Lỗi lưu dữ liệu!',
+                text: data.message || 'Có lỗi xảy ra khi cập nhật.',
+                icon: 'error',
+                confirmButtonColor: '#ef4444'
+            });
+            el.value = el.dataset.prev ? fmtVND(parseFloat(el.dataset.prev)) : '';
+            el.style.outline = '2px solid #ef4444';
+            setTimeout(() => el.style.outline = '', 2000);
+            return;
+        }
         el.style.outline = '2px solid #10b981';
         setTimeout(() => el.style.outline = '', 1200);
         if (data.all_kpi) updateAllKPI(data.all_kpi);
@@ -519,25 +570,31 @@ async function equalizeKPI() {
     }
 }
 
-// ── Khóa ngày ──
+// ── Khóa ngày → tự động rebalance KPI tuần ──
 async function lockDay() {
     const result = await Swal.fire({
         title: '🔒 Khóa ngày ' + DATE + '?',
-        text : 'Sau khi khóa, nhân viên không thể sửa dữ liệu nữa.',
+        html : 'Sau khi khóa:<br>• Nhân viên <b>không thể sửa</b> dữ liệu nữa<br>• Hệ thống tự <b>tái phân bổ KPI</b> các ngày còn lại trong tuần',
         icon : 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Khóa',
+        confirmButtonText: '🔒 Khóa & Rebalance',
         cancelButtonText : 'Hủy',
-        confirmButtonColor: '#ef4444',
+        confirmButtonColor: '#334155',
     });
     if (!result.isConfirmed) return;
 
-    await fetch('{{ route("fe.daily.lock") }}', {
+    const res = await fetch('{{ route("fe.daily.lock") }}', {
         method : 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': TOKEN },
         body   : JSON.stringify({ date: DATE, store_id: STORE_ID }),
     });
-    location.reload();
+    const data = await res.json();
+    if (data.status === 'success') {
+        Swal.fire({ title: 'Đã khóa!', text: 'KPI các ngày tới đã được tái phân bổ.', icon: 'success', timer: 1800, showConfirmButton: false })
+            .then(() => location.reload());
+    } else {
+        Swal.fire('Lỗi', data.message || 'Có lỗi xảy ra', 'error');
+    }
 }
 
 // ── Xóa dữ liệu NV ──

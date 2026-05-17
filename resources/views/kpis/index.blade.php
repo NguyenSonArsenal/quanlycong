@@ -48,8 +48,11 @@
     @forelse($configs as $cfg)
     @php
         $dr    = $cfg->daily_ratios ?? [];
-        $early = ($dr[1]??0)+($dr[2]??0)+($dr[3]??0)+($dr[4]??0);
-        $late  = ($dr[5]??0)+($dr[6]??0)+($dr[7]??0);
+        $eu = (float)($dr[1] ?? 50);
+        $lu = (float)($dr[5] ?? 50);
+        $sum = ($eu + $lu) ?: 100;
+        $early = round($eu / $sum * 100, 1);
+        $late  = round(100 - $early, 1);
         $totalDays = $cfg->dailyTargets->count();
         $monthLabel = \Carbon\Carbon::parse($cfg->month.'-01')->locale('vi')->isoFormat('MMMM [năm] Y');
     @endphp
@@ -79,11 +82,11 @@
             <div class="flex gap-4">
                 <div>
                     <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">T2–T5</p>
-                    <p class="text-xs font-black text-blue-600">{{ round($early,1) }}%</p>
+                    <p class="text-xs font-black text-blue-600">{{ $early }}%</p>
                 </div>
                 <div>
                     <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">T6–CN</p>
-                    <p class="text-xs font-black text-rose-500">{{ round($late,1) }}%</p>
+                    <p class="text-xs font-black text-rose-500">{{ $late }}%</p>
                 </div>
                 <div>
                     <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Tuần</p>
@@ -151,7 +154,9 @@
             </div>
             <div>
                 <label class="text-[10px] font-black text-slate-500 uppercase mb-1.5 block">Tổng doanh thu mục tiêu (đ)</label>
-                <input type="number" name="total_target" placeholder="Ví dụ: 1000000000" required min="1" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-rose-400 font-black bg-slate-50 text-emerald-600">
+                <input type="text" id="create_total_display" placeholder="Ví dụ: 1.000.000.000" required class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-rose-400 font-black bg-slate-50 text-emerald-600" oninput="formatNumberInput(this, 'create_total')">
+                <input type="hidden" name="total_target" id="create_total">
+                <p class="text-[10px] text-slate-400 mt-1">💡 Nhập từ 1 - 10 tỷ (Tự động thêm dấu chấm phân cách)</p>
             </div>
             <div class="flex gap-3 pt-1">
                 <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-black hover:bg-slate-50">Hủy</button>
@@ -184,7 +189,9 @@
             </div>
             <div>
                 <label class="text-[10px] font-black text-slate-500 uppercase mb-1.5 block">Tổng KPI tháng (đ)</label>
-                <input type="number" name="total_target" id="edit_total" min="1" required class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-blue-400 font-black bg-slate-50 text-emerald-600">
+                <input type="text" id="edit_total_display" required class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-blue-400 font-black bg-slate-50 text-emerald-600" oninput="formatNumberInput(this, 'edit_total')">
+                <input type="hidden" name="total_target" id="edit_total">
+                <p class="text-[10px] text-slate-400 mt-1">💡 Nhập từ 1 - 10 tỷ (Tự động thêm dấu chấm phân cách)</p>
                 <p class="text-[10px] text-amber-600 mt-1">⚠ Lưu sẽ tự tính lại toàn bộ daily targets theo cấu hình hiện tại.</p>
             </div>
             <div class="flex gap-3 pt-1">
@@ -196,6 +203,30 @@
 </div>
 
 <script>
+function formatNumberInput(input, rawInputId) {
+    // 1. Remove all non-digits
+    let value = input.value.replace(/\D/g, '');
+    
+    // 2. Parse as integer
+    let num = parseInt(value, 10);
+    
+    // 3. Cap at 10 billion (10,000,000,000)
+    if (num > 10000000000) {
+        num = 10000000000;
+    }
+    
+    // 4. Update inputs
+    const rawInput = document.getElementById(rawInputId);
+    if (isNaN(num)) {
+        input.value = '';
+        if (rawInput) rawInput.value = '';
+    } else {
+        // Format with dot separators
+        input.value = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        if (rawInput) rawInput.value = num;
+    }
+}
+
 function applyFilter() {
     const s = document.getElementById('filter_store').value;
     const y = document.getElementById('filter_year').value;
@@ -211,7 +242,15 @@ function openEdit(id, storeId, month, total) {
     document.getElementById('editForm').action = '/staff-shift-kpi/kpi-config/' + id;
     document.getElementById('edit_store_id').value = storeId;
     document.getElementById('edit_month').value = month;
-    document.getElementById('edit_total').value = total;
+    
+    // Set raw value
+    const rawInput = document.getElementById('edit_total');
+    rawInput.value = total;
+    
+    // Set formatted value
+    const displayInput = document.getElementById('edit_total_display');
+    displayInput.value = total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    
     document.getElementById('editModalSub').textContent = 'Cấu hình #' + id + ' — ' + month;
     document.getElementById('editModal').classList.remove('hidden');
 }

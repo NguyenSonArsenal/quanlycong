@@ -127,8 +127,8 @@
 <table class="w-full text-[11px] border-collapse" id="kpiMatrix">
 <thead>
     <tr class="bg-slate-800 text-white text-center">
-        <th class="px-3 py-2 text-left border-r border-slate-700 whitespace-nowrap">Tuần</th>
-        <th class="px-3 py-2 border-r border-slate-700 whitespace-nowrap">
+        <th class="px-3 py-2 text-left border-r border-slate-700 whitespace-nowrap w-[135px]">Tuần</th>
+        <th class="px-3 py-2 border-r border-slate-700 whitespace-nowrap w-[165px]">
             KPI Tuần
             <br><span id="wk_badge" class="text-[9px] font-normal text-emerald-300">Tổng: 100%</span>
             <br><button type="button" onclick="autoDistributeWeeks()" class="mt-0.5 px-1.5 py-0.5 rounded bg-amber-500 hover:bg-amber-400 text-white text-[8px] font-bold transition-all" title="Phân bổ % theo số ngày thực tế">⚖ Theo ngày</button>
@@ -149,38 +149,99 @@
         $weekWt   = (float)($wr[$w] ?? 20);
         $weekAmt  = round($total * $weekWt / 100);
         $tgts     = collect($weekData['targets']);
-        $byDow=[]; $presentDows=[]; $dateMap=[];
+        
+        $isWeekAlreadyLocked = in_array($w, $config->locked_weeks ?? []);
+        $actualRevenueThisWeek = $tgts->sum(fn($t) => $t ? ($actualByDate[$t->date] ?? 0) : 0);
+        
+        $byDow=[]; $presentDows=[]; $dateMap=[]; $targetObjMap=[];
         foreach($tgts as $t) {
-            $dow=\Carbon\Carbon::parse($t->date)->isoWeekday();
-            $byDow[$dow]=($byDow[$dow]??0)+(float)$t->target_amount;
-            $dateMap[$dow]=\Carbon\Carbon::parse($t->date)->format('d/m');
+            if (!$t) continue;
+            $dow = \Carbon\Carbon::parse($t->date)->isoWeekday();
+            $actualRevenue = (float)($actualByDate[$t->date] ?? 0);
+            
+            $effectiveTarget = ($t->rebalanced_target && $t->rebalanced_target > 0)
+                ? (float)$t->rebalanced_target
+                : (float)$t->target_amount;
+            $byDow[$dow]  = ($byDow[$dow] ?? 0) + $effectiveTarget;
+            $dateMap[$dow] = \Carbon\Carbon::parse($t->date)->format('d/m');
+            $targetObjMap[$dow] = $t;
             if(!in_array($dow,$presentDows)) $presentDows[]=$dow;
         }
         sort($presentDows);
+        // Kiem tra tat ca cac ngay co data deu da locked chua
+        $weekDatesFormatted = array_values($dateMap);
+        $isAllDaysLocked = count($weekDatesFormatted) > 0 && count(array_filter($weekDatesFormatted, fn($d) => isset($lockedDates[$d]))) === count($weekDatesFormatted);
     @endphp
-    <tr class="{{ $w%2?'bg-white':'bg-slate-50/60' }} hover:bg-blue-50/20" data-week-row="{{ $w }}" data-days="{{ implode(',',$presentDows) }}">
-        <td class="px-3 py-3 font-black text-slate-700 border-r border-slate-100">Tuần {{ $w }}</td>
-        <td class="px-2 py-2 border-r border-slate-100 text-center min-w-[130px]">
+    <tr class="{{ $w%2?'bg-white':'bg-slate-50/60' }} hover:bg-blue-50/20" data-week-row="{{ $w }}" data-days="{{ implode(',', $presentDows) }}">
+        <td class="px-2 py-3 font-black text-slate-700 border-r border-slate-100 w-[135px]">
+            <div class="flex flex-col gap-1.5">
+                <span class="text-xs font-black text-slate-700">Tuần {{ $w }}</span>
+                @if(auth()->user()->role === 'admin')
+                    @if($isWeekAlreadyLocked)
+                        <span class="inline-flex items-center justify-center gap-1 px-1.5 py-0.5 rounded bg-emerald-700 text-white text-[9px] font-bold shadow-sm whitespace-nowrap">
+                            🔒 Đã khóa tuần
+                        </span>
+                    @elseif($isAllDaysLocked)
+                        <button type="button" onclick="lockWeek({{ $w }})" id="lock-week-btn-{{ $w }}"
+                            class="inline-flex items-center justify-center gap-1 px-1.5 py-0.5 bg-slate-700 hover:bg-slate-600 text-white rounded font-bold text-[9px] shadow transition-all cursor-pointer whitespace-nowrap"
+                            title="Khóa tuần {{ $w }} & rebalance KPI các tuần tới">
+                            🔒 Khóa tuần
+                        </button>
+                    @else
+                        <button disabled
+                            class="inline-flex items-center justify-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-400 rounded font-bold text-[9px] cursor-not-allowed border border-slate-200 whitespace-nowrap"
+                            title="Vui lòng khóa tất cả các ngày trong tuần này trước khi khóa tuần">
+                            🔒 Khóa tuần
+                        </button>
+                    @endif
+                @endif
+            </div>
+        </td>
+        <td class="px-2 py-2 border-r border-slate-100 text-center w-[165px]">
             <div class="flex flex-col items-center gap-1">
                 <div class="flex items-center gap-1">
                     <input type="number" name="week_weights[{{ $w }}]" value="{{ number_format($weekWt,2,'.','') }}" step="0.01" min="0" max="100"
                         class="week-w w-20 px-2 py-1 rounded border border-blue-200 font-black text-blue-700 text-center text-xs outline-none shadow-sm" oninput="recalc()">
                     <span class="text-[9px] font-bold text-slate-400">%</span>
                 </div>
-                <div class="week-amt font-black text-emerald-700 text-xs" data-w="{{ $w }}">{{ number_format($weekAmt,0,',','.') }}</div>
-                <div class="week-days-badge text-[8px] font-bold {{ count($presentDows)<7 ? 'text-amber-500' : 'text-slate-300' }}" data-w="{{ $w }}">{{ count($presentDows) }} ngày</div>
+                @php
+                    $weekCurrentTarget = array_sum($byDow);
+                @endphp
+                <div class="week-amt font-black mt-0.5 tracking-tight text-center" data-w="{{ $w }}" data-actual="{{ $actualRevenueThisWeek }}" data-init-target="{{ $weekCurrentTarget }}">
+                    @if($actualRevenueThisWeek > 0)
+                        <div class="text-[11px] text-slate-600 font-bold">Target: {{ number_format($weekCurrentTarget,0,',','.') }}</div>
+                        <div class="text-[12px] text-emerald-700 font-extrabold mt-0.5">DT: {{ number_format($actualRevenueThisWeek,0,',','.') }}</div>
+                    @else
+                        <div class="text-emerald-700 text-xs font-black">{{ number_format($weekCurrentTarget,0,',','.') }}</div>
+                    @endif
+                </div>
+                <div class="week-days-badge text-[8px] font-bold {{ count($presentDows)<7 ? 'text-amber-500' : 'text-slate-300' }}" data-w="{{ $w }}">{{ count($presentDows) }} ngay</div>
             </div>
         </td>
         @foreach([1,2,3,4,5,6,7] as $d)
-        @php $isWE = $d>=5; @endphp
-        <td class="px-1 py-2 border-r border-slate-100 text-center {{ $isWE?'bg-rose-50/20':'bg-blue-50/20' }} {{ $d==7?'border-r-0':'' }} min-w-[85px]">
+        @php
+            $isWE = $d>=5;
+            $isLocked = isset($lockedDates[$dateMap[$d] ?? ""]);
+            $tObj = $targetObjMap[$d] ?? null;
+            $actualRevenue = $tObj ? ($actualByDate[$tObj->date] ?? 0) : 0;
+        @endphp
+        <td class="px-1 py-2 border-r border-slate-100 text-center {{ $isLocked ? 'bg-slate-100 border-slate-200' : ($isWE?'bg-rose-50/20':'bg-blue-50/20') }} {{ $d==7?'border-r-0':'' }} min-w-[85px] relative">
             <div class="flex flex-col items-center gap-1.5 py-1">
                 @if(in_array($d, $presentDows))
-                    <span class="text-[9px] {{ $isWE?'text-rose-500':'text-blue-500' }} font-black uppercase tracking-tighter">{{ $dateMap[$d] }}</span>
+                    <span class="text-[9px] {{ $isLocked ? 'text-slate-400' : ($isWE?'text-rose-500':'text-blue-500') }} font-black uppercase tracking-tighter">{{ $dateMap[$d] }}{{ $isLocked ? ' 🔒' : ' ' }}</span>
                     {{-- Tất cả tuần đều hiển thị effective % (JS sẽ cập nhật) --}}
                     <span class="font-black {{ $isWE?'text-rose-600':'text-blue-600' }} day-pct text-[11px] bg-white/50 px-2 py-0.5 rounded border {{ $isWE?'border-rose-100':'border-blue-100' }} shadow-sm" data-dow="{{ $d }}" data-w="{{ $w }}">{{ number_format($dr[$d]??14.28,2) }}%</span>
-                    <div class="day-kpi text-[12px] font-mono font-black {{ $isWE?'text-rose-900':'text-blue-900' }} mt-0.5 tracking-tight" data-w="{{ $w }}" data-dow="{{ $d }}" data-present="1">
-                        {{ number_format(round($byDow[$d]??0),0,',','.') }}
+                    <div class="day-kpi text-[11px] font-mono font-black {{ $isWE?'text-rose-900':'text-blue-900' }} mt-0.5 tracking-tight"
+                        data-w="{{ $w }}" data-dow="{{ $d }}" data-present="1"
+                        data-rebalanced="{{ round($byDow[$d]??0) }}"
+                        data-actual="{{ $actualRevenue }}"
+                        data-init-target="{{ round($byDow[$d]??0) }}">
+                        @if($actualRevenue > 0)
+                            <div class="text-[11px] text-slate-600 font-bold">Target: {{ number_format(round($byDow[$d]??0),0,',','.') }}</div>
+                            <div class="text-[12px] text-emerald-700 font-extrabold mt-0.5">DT: {{ number_format($actualRevenue,0,',','.') }}</div>
+                        @else
+                            {{ number_format(round($byDow[$d]??0),0,',','.') }}
+                        @endif
                     </div>
                 @else
                     <div class="h-[52px] flex items-center justify-center opacity-10"><span class="text-slate-400 font-bold">—</span></div>
@@ -209,8 +270,20 @@
 </div>
 </form>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 let TOTAL = {{ $total }};
+const LOCKED_WEEKS = @json($config->locked_weeks ?? []);
+const WEEK_ACTUALS = {
+    @for($w=1;$w<=5;$w++)
+        '{{ $w }}': {{ $weeks[$w] ? collect($weeks[$w]['targets'])->sum(fn($t) => $t ? ($actualByDate[$t->date] ?? 0) : 0) : 0 }},
+    @endfor
+};
+const DB_WEEK_TARGETS = {
+    @for($w=1;$w<=5;$w++)
+        '{{ $w }}': {{ $weeks[$w] ? collect($weeks[$w]['targets'])->sum(fn($t) => $t ? (($t->rebalanced_target && $t->rebalanced_target > 0) ? $t->rebalanced_target : $t->target_amount) : 0) : 0 }},
+    @endfor
+};
 
 // ── T\u1ed5ng KPI: input text c\u00f3 d\u1ea5u ch\u1ea5m ──
 function onTotalInput(el) {
@@ -337,38 +410,82 @@ function recalc(){
     const wSum = ww.reduce((a,b)=>a+b,0);
     const wOk = Math.abs(wSum-100)<0.15;
 
-    // Badge t\u1ed5ng tu\u1ea7n
+    // Badge tổng tuần
     const wb2 = document.getElementById('wk_badge');
-    wb2.textContent = 'T\u1ed5ng: '+wSum.toFixed(2)+'%';
+    wb2.textContent = 'Tổng: '+wSum.toFixed(2)+'%';
     wb2.style.color = wOk ? '#6ee7b7' : '#fca5a5';
     wb2.style.animation = wOk ? '' : 'pulse 1s infinite';
 
-    // T\u00f4 \u0111\u1ecf inputs tu\u1ea7n khi t\u1ed5ng \u2260 100%
+    // Tô đỏ inputs tuần khi tổng ≠ 100%
     document.querySelectorAll('input.week-w').forEach(inp => {
         inp.style.borderColor = wOk ? '' : '#fb7185';
         inp.style.backgroundColor = wOk ? '' : '#fff1f2';
     });
 
-    // day_sum_badge: hi\u1ec3n t\u1ef7 l\u1ec7 ng\u00e0y
+    // day_sum_badge: hiển thị tỷ lệ ngày
     const db = document.getElementById('day_sum_badge');
     const eu = dw[1]||1, lu = dw[5]||1;
-    db.textContent = `\u0110\u01a1n v\u1ecb: ${parseFloat(eu).toFixed(2)}:${parseFloat(lu).toFixed(2)}`;
+    db.textContent = `Đơn vị: ${parseFloat(eu).toFixed(2)}:${parseFloat(lu).toFixed(2)}`;
     db.className = 'font-black text-emerald-300';
 
+    // 1. Tìm maxLockedWeek
+    let maxLockedWeek = 0;
+    if (LOCKED_WEEKS.length > 0) {
+        maxLockedWeek = Math.max(...LOCKED_WEEKS);
+    }
+
+    // 2. Tính pastContribution cho các tuần <= maxLockedWeek
+    let pastContribution = 0;
+    for (let w = 1; w <= maxLockedWeek; w++) {
+        if (LOCKED_WEEKS.includes(w)) {
+            pastContribution += WEEK_ACTUALS[w] || 0;
+        } else {
+            pastContribution += DB_WEEK_TARGETS[w] || 0;
+        }
+    }
+
+    // 3. Tính KPI còn lại cho các tuần tương lai (> maxLockedWeek)
+    const futureKPI = TOTAL - pastContribution;
+
+    // 4. Tính tổng weight của các tuần tương lai
+    let futureWeightSum = 0;
+    for (let w = maxLockedWeek + 1; w <= 5; w++) {
+        futureWeightSum += ww[w-1] || 0;
+    }
+
     for(let w=1;w<=5;w++){
-        const wAmt = TOTAL*(ww[w-1]||0)/100;
+        let wAmt = 0;
+        if (w <= maxLockedWeek) {
+            if (LOCKED_WEEKS.includes(w)) {
+                wAmt = WEEK_ACTUALS[w] || 0;
+            } else {
+                wAmt = DB_WEEK_TARGETS[w] || 0;
+            }
+        } else {
+            // Chia đều KPI còn lại theo tỷ lệ tương lai
+            wAmt = futureWeightSum > 0 ? futureKPI * (ww[w-1] || 0) / futureWeightSum : 0;
+        }
+
         const wc = document.querySelector(`.week-amt[data-w="${w}"]`);
-        if(wc) wc.textContent = Math.round(wAmt).toLocaleString('vi-VN');
+        if(wc) {
+            const actual = parseInt(wc.dataset.actual) || 0;
+            const targetVal = Math.round(wAmt);
+            if (actual > 0) {
+                wc.innerHTML = `<div class="text-[11px] text-slate-600 font-bold">Target: ${targetVal.toLocaleString('vi-VN')}</div>` +
+                               `<div class="text-[12px] text-emerald-700 font-extrabold mt-0.5">DT: ${actual.toLocaleString('vi-VN')}</div>`;
+            } else {
+                wc.innerHTML = `<div class="text-emerald-700 text-xs font-black">${targetVal.toLocaleString('vi-VN')}</div>`;
+            }
+        }
 
         const row = document.querySelector(`tr[data-week-row="${w}"]`);
         if(!row) continue;
         const pDays = row.dataset.days ? row.dataset.days.split(',').filter(Boolean).map(Number) : [];
 
-        // wDS = t\u1ed5ng \u0111\u01a1n v\u1ecb c\u00e1c ng\u00e0y C\u00d3 M\u1eb6T trong tu\u1ea7n
-        // V\u00ed d\u1ee5: tu\u1ea7n 5 c\u00f3 T2,T3,T4,T5,T6 v\u00e0 t\u1ef7 l\u1ec7 4:6 → wDS = 4+4+4+4+6 = 22
+        // wDS = tổng đơn vị các ngày CÓ MẠT trong tuần
         const wDS = pDays.reduce((s,d) => s+(dw[d]||1), 0);
 
-        // % hi\u1ec7u qu\u1ea3 trong tu\u1ea7n (t\u1ed5ng lu\u00f4n = 100%)
+        // % hiệu quả trong tuần (tổng luôn = 100%)
         row.querySelectorAll('.day-pct').forEach(s => {
             const dow = parseInt(s.dataset.dow);
             if(!pDays.includes(dow)) return;
@@ -376,12 +493,27 @@ function recalc(){
             s.textContent = effPct.toFixed(2)+'%';
         });
 
-        // Ti\u1ec1n t\u1eebng ng\u00e0y = KPI_tu\u1ea7n × \u0111\u01a1n_v\u1ecb(d) / wDS
+        // Tiền từng ngày:
         document.querySelectorAll(`.day-kpi[data-w="${w}"]`).forEach(cell => {
             const dow = parseInt(cell.dataset.dow);
             if(!pDays.includes(dow)) return;
-            const dAmt = wDS > 0 ? wAmt * (dw[dow]||1) / wDS : 0;
-            cell.textContent = Math.round(dAmt).toLocaleString('vi-VN');
+            
+            const actual = parseInt(cell.dataset.actual) || 0;
+            let val = 0;
+
+            if (w <= maxLockedWeek) {
+                val = Math.round(parseFloat(cell.dataset.initTarget) || 0);
+            } else {
+                const dAmt = wDS > 0 ? wAmt * (dw[dow]||1) / wDS : 0;
+                val = Math.round(dAmt);
+            }
+
+            if (actual > 0) {
+                cell.innerHTML = `<div class="text-[11px] text-slate-600 font-bold">Target: ${val.toLocaleString('vi-VN')}</div>` +
+                                 `<div class="text-[12px] text-emerald-700 font-extrabold mt-0.5">DT: ${actual.toLocaleString('vi-VN')}</div>`;
+            } else {
+                cell.textContent = val.toLocaleString('vi-VN');
+            }
         });
     }
 }
@@ -394,6 +526,49 @@ function validateForm(){
     if(eu<1||lu<1){ alert('\u0110\u01a1n v\u1ecb ng\u00e0y ph\u1ea3i \u2265 1!'); return false; }
     return true;
 }
+
+// -- Khoa tuan & rebalance KPI cac tuan con lai --
+async function lockWeek(weekNo) {
+    const result = await Swal.fire({
+        title: `🔒 Khóa Tuần ${weekNo}?`,
+        html: `Hệ thống sẽ <b>tái phân bổ KPI</b> các tuần còn lại<br>dựa trên doanh thu thực tế Tuần ${weekNo}`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '🔒 Khóa & Rebalance',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#334155',
+    });
+    if (!result.isConfirmed) return;
+
+    const res = await fetch(`{{ url('/staff-shift-kpi/kpi-config/' . $config->id . '/lock-week') }}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ week_number: weekNo })
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+        // Doi button -> badge "Da khoa tuan"
+        const btn = document.getElementById(`lock-week-btn-${weekNo}`);
+        if (btn) {
+            const badge = document.createElement('span');
+            badge.className = 'inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-700 text-white text-[10px] font-bold';
+            badge.textContent = '🔒 Đã khóa tuần';
+            btn.replaceWith(badge);
+        }
+        const diff = data.diff;
+        const sign = diff >= 0 ? '+' : '';
+        const futureTxt = data.future_weeks.length > 0 ? `<br>Đã tái phân bổ sang Tuần ${data.future_weeks.join(', Tuần ')}.` : '<br>Không còn tuần tương lai.';
+        Swal.fire({
+            title: `✅ Đã khóa Tuần ${weekNo}!`,
+            html: `Thực tế: <b>${Math.round(data.actual).toLocaleString('vi-VN')}đ</b><br>Target: <b>${Math.round(data.target).toLocaleString('vi-VN')}đ</b><br>Chênh lệch: <b>${sign}${Math.round(diff).toLocaleString('vi-VN')}đ</b>${futureTxt}`,
+            icon: diff >= 0 ? 'success' : 'warning',
+            confirmButtonText: 'Xem kết quả'
+        }).then(() => location.reload());
+    } else {
+        Swal.fire('Lỗi', data.message || 'Có lỗi xảy ra', 'error');
+    }
+}
+
 recalc(); checkShift('wd'); checkShift('we');
 </script>
 @endsection

@@ -22,7 +22,7 @@
         <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 text-base">💼</div>
         <div>
             <h2 class="font-black text-slate-800">Cấu hình lương theo chức danh</h2>
-            <p class="text-[10px] text-slate-400">Lương/giờ mặc định · Loại hợp đồng · Thưởng team · Tính KPI</p>
+            <p class="text-[10px] text-slate-400">Lương/giờ mặc định · Loại hợp đồng · Thưởng team · Sale</p>
         </div>
     </div>
 
@@ -30,13 +30,13 @@
         <table class="w-full text-sm border-collapse">
             <thead class="bg-slate-800 text-white text-[9px] uppercase font-bold tracking-wider">
                 <tr>
-                    <th class="px-4 py-3 text-left">Chức danh</th>
-                    <th class="px-3 py-3 text-center">Mã</th>
-                    <th class="px-3 py-3 text-center">Tính KPI</th>
-                    <th class="px-4 py-3 text-center">Loại HĐ mặc định</th>
-                    <th class="px-4 py-3 text-right">Lương/giờ mặc định</th>
-                    <th class="px-4 py-3 text-right">Thưởng Team Base</th>
-                    <th class="px-3 py-3 text-center w-24">Lưu</th>
+                    <th class="px-3 py-2 text-left">Chức danh</th>
+                    <th class="px-2 py-2 text-center">Mã</th>
+                    <th class="px-2 py-2 text-center">Sale</th>
+                    <th class="px-3 py-2 text-center">Loại HĐ mặc định</th>
+                    <th class="px-3 py-2 text-right">Lương/giờ mặc định</th>
+                    <th class="px-3 py-2 text-right">Thưởng Team Base</th>
+                    <th class="px-2 py-2 text-center w-24">Lưu</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -47,13 +47,13 @@
                         @csrf @method('PUT')
                     </form>
                     
-                    <td class="px-4 py-3">
+                    <td class="px-3 py-2">
                         <div class="font-bold text-slate-800">{{ $pos->name }}</div>
                     </td>
-                    <td class="px-3 py-3 text-center">
+                    <td class="px-2 py-2 text-center">
                         <span class="text-[9px] font-bold font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{{ $pos->code }}</span>
                     </td>
-                    <td class="px-3 py-3 text-center">
+                    <td class="px-2 py-2 text-center">
                         <label class="inline-flex items-center gap-1.5 cursor-pointer">
                             <input type="hidden" name="is_sales" value="0" form="form-pos-{{ $pos->id }}">
                             <input type="checkbox" name="is_sales" value="1"
@@ -64,9 +64,9 @@
                             </span>
                         </label>
                     </td>
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-3 py-2 text-center">
                         <select name="default_contract_type"
-                            class="px-3 py-1.5 rounded-lg border border-slate-200 outline-none text-xs font-bold text-slate-700 bg-white"
+                            class="px-2 py-1 rounded-lg border border-slate-200 outline-none text-xs font-bold text-slate-700 bg-white"
                             form="form-pos-{{ $pos->id }}">
                             <option value="CT" {{ ($pos->default_contract_type ?? 'CT') === 'CT' ? 'selected' : '' }}>
                                 CT — Chính thức
@@ -76,28 +76,28 @@
                             </option>
                         </select>
                     </td>
-                    <td class="px-4 py-3 text-right">
+                    <td class="px-3 py-2 text-right">
                         <div class="flex items-center justify-end gap-1">
                             <input type="text" name="default_hourly_rate"
                                 value="{{ number_format($pos->default_hourly_rate ?? 0, 0, ',', '.') }}"
-                                class="w-28 px-3 py-1.5 rounded-lg border border-slate-200 outline-none text-xs font-bold text-right text-slate-700 focus:border-blue-400 focus:ring-1 focus:ring-blue-100 number-format-input"
+                                class="w-28 px-2.5 py-1 rounded-lg border border-slate-200 outline-none text-xs font-bold text-right text-slate-700 focus:border-blue-400 focus:ring-1 focus:ring-blue-100 number-format-input"
                                 form="form-pos-{{ $pos->id }}">
                             <span class="text-[9px] text-slate-400">đ/h</span>
                         </div>
                     </td>
-                    <td class="px-4 py-3 text-right">
+                    <td class="px-3 py-2 text-right">
                         <div class="flex items-center justify-end gap-1">
                             <input type="text" name="team_bonus_base"
                                 value="{{ number_format($pos->team_bonus_base ?? 0, 0, ',', '.') }}"
-                                class="w-32 px-3 py-1.5 rounded-lg border border-slate-200 outline-none text-xs font-bold text-right text-slate-700 focus:border-blue-400 focus:ring-1 focus:ring-blue-100 number-format-input"
+                                class="w-32 px-2.5 py-1 rounded-lg border border-slate-200 outline-none text-xs font-bold text-right text-slate-700 focus:border-blue-400 focus:ring-1 focus:ring-blue-100 number-format-input"
                                 form="form-pos-{{ $pos->id }}">
                             <span class="text-[9px] text-slate-400">đ</span>
                         </div>
                     </td>
-                    <td class="px-3 py-3 text-center">
+                    <td class="px-2 py-2 text-center">
                         <button type="submit"
                             form="form-pos-{{ $pos->id }}"
-                            class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-bold hover:bg-blue-700 transition-all">
+                            class="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-bold hover:bg-blue-700 transition-all">
                             Lưu
                         </button>
                     </td>
@@ -132,20 +132,27 @@
         <table class="w-full text-sm border-collapse min-w-[1000px]">
             <thead class="bg-slate-800 text-white text-[9px] uppercase font-bold tracking-wider text-center">
                 <tr>
-                    <th class="px-4 py-3 text-left">Chức danh</th>
-                    <th class="px-3 py-3">Loại HĐ</th>
-                    <th class="px-4 py-3 w-36">&lt; 90% KPI</th>
-                    <th class="px-4 py-3 w-36">90% - 100% KPI</th>
-                    <th class="px-4 py-3 w-36">100% - 110% KPI</th>
-                    <th class="px-4 py-3 w-36">110% - 120% KPI</th>
-                    <th class="px-4 py-3 w-36">&ge; 120% KPI</th>
-                    <th class="px-3 py-3 w-28 text-center">Hành động</th>
+                    <th class="px-3 py-2 text-left">Chức danh</th>
+                    <th class="px-2 py-2">Loại HĐ</th>
+                    <th class="px-2 py-2">Hiệu lực từ</th>
+                    <th class="px-2 py-2">Hiệu lực đến</th>
+                    <th class="px-2.5 py-2 w-32">&lt; 90% KPI</th>
+                    <th class="px-2.5 py-2 w-32">90% - 100% KPI</th>
+                    <th class="px-2.5 py-2 w-32">100% - 110% KPI</th>
+                    <th class="px-2.5 py-2 w-32">110% - 120% KPI</th>
+                    <th class="px-2.5 py-2 w-32">&ge; 120% KPI</th>
+                    <th class="px-2 py-2 w-24 text-center">Hành động</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @foreach($bracketsGrouped as $key => $groupBrackets)
                 @php
-                    [$posCode, $contractType] = explode('|', $key);
+                    $parts = explode('|', $key);
+                    $posCode = $parts[0] ?? '';
+                    $contractType = $parts[1] ?? '';
+                    $effectiveFrom = $parts[2] ?? '';
+                    $effectiveTo = $parts[3] ?? '';
+
                     $b0_90 = $groupBrackets->first(fn($b) => $b->min_kpi == 0 && $b->max_kpi == 90);
                     $b90_100 = $groupBrackets->first(fn($b) => $b->min_kpi == 90 && $b->max_kpi == 100);
                     $b100_110 = $groupBrackets->first(fn($b) => $b->min_kpi == 100 && $b->max_kpi == 110);
@@ -157,17 +164,23 @@
                     $b90_inf  = $groupBrackets->first(fn($b) => $b->min_kpi == 90 && $b->max_kpi === null);
                 @endphp
                 <tr class="{{ $loop->even ? 'bg-slate-50/30' : 'bg-white' }} hover:bg-purple-50/20 transition-colors">
-                    <td class="px-4 py-3">
+                    <td class="px-3 py-2">
                         <span class="text-[9px] font-bold font-mono bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">{{ $posCode }}</span>
                     </td>
-                    <td class="px-3 py-3 text-center">
+                    <td class="px-2 py-2 text-center">
                         <span class="text-[9px] px-1.5 py-0.5 rounded font-bold {{ $contractType === 'TV' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600' }}">
                             {{ $contractType }}
                         </span>
                     </td>
+                    <td class="px-2 py-2 text-center text-xs font-bold text-slate-700">
+                        {{ $effectiveFrom ? date('d/m/Y', strtotime($effectiveFrom)) : '—' }}
+                    </td>
+                    <td class="px-2 py-2 text-center text-xs font-medium text-slate-500">
+                        {{ $effectiveTo ? date('d/m/Y', strtotime($effectiveTo)) : 'Vô hạn' }}
+                    </td>
 
                     {{-- < 90% --}}
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-2.5 py-2 text-center">
                         @if($b0_90)
                             <div class="inline-flex items-center gap-1 justify-center">
                                 <form method="POST" action="{{ route('fe.settings.brackets.update', $b0_90->id) }}" class="flex items-center gap-0.5">
@@ -188,7 +201,7 @@
                     </td>
 
                     {{-- 90% - 100% --}}
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-2.5 py-2 text-center">
                         @php $b = $b90_100 ?: $b90_inf; @endphp
                         @if($b)
                             <div class="inline-flex items-center gap-1 justify-center">
@@ -211,7 +224,7 @@
                     </td>
 
                     {{-- 100% - 110% --}}
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-2.5 py-2 text-center">
                         @php $b = $b100_110 ?: $b100_inf; @endphp
                         @if($b)
                             <div class="inline-flex items-center gap-1 justify-center">
@@ -234,7 +247,7 @@
                     </td>
 
                     {{-- 110% - 120% --}}
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-2.5 py-2 text-center">
                         @if($b110_120)
                             <div class="inline-flex items-center gap-1 justify-center">
                                 <form method="POST" action="{{ route('fe.settings.brackets.update', $b110_120->id) }}" class="flex items-center gap-0.5">
@@ -255,7 +268,7 @@
                     </td>
 
                     {{-- >= 120% --}}
-                    <td class="px-4 py-3 text-center">
+                    <td class="px-2.5 py-2 text-center">
                         @if($b120_inf)
                             <div class="inline-flex items-center gap-1 justify-center">
                                 <form method="POST" action="{{ route('fe.settings.brackets.update', $b120_inf->id) }}" class="flex items-center gap-0.5">
@@ -276,9 +289,9 @@
                     </td>
 
                     {{-- Xóa hàng --}}
-                    <td class="px-3 py-3 text-center">
-                        <form method="POST" action="{{ route('fe.settings.brackets.destroy_group', [$posCode, $contractType]) }}"
-                            onsubmit="return confirm('Bạn có chắc muốn xóa TOÀN BỘ hàng hoa hồng này của {{ $posCode }} ({{ $contractType }})?')">
+                    <td class="px-2 py-2 text-center">
+                        <form method="POST" action="{{ route('fe.settings.brackets.destroy_group', [$posCode, $contractType]) }}?effective_from={{ $effectiveFrom }}"
+                            onsubmit="return confirm('Bạn có chắc muốn xóa TOÀN BỘ hàng hoa hồng này của {{ $posCode }} ({{ $contractType }}) áp dụng từ {{ date('d/m/Y', strtotime($effectiveFrom)) }}?')">
                             @csrf @method('DELETE')
                             <button type="submit" class="px-2 py-1 bg-rose-50 text-rose-600 rounded-lg text-[9px] font-bold hover:bg-rose-600 hover:text-white transition-all flex items-center gap-1 mx-auto" title="Xóa toàn bộ hàng">
                                 🗑️ Xóa
@@ -330,7 +343,12 @@
             <div>
                 <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Hiệu lực từ</label>
                 <input type="date" name="effective_from" value="{{ date('Y-m-d') }}"
-                    class="px-3 py-2 rounded-lg border border-slate-200 outline-none text-xs font-medium" required>
+                    class="px-3 py-2 rounded-lg border border-slate-200 outline-none text-xs font-medium font-sans" required>
+            </div>
+            <div>
+                <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Hiệu lực đến (bỏ trống = vô hạn)</label>
+                <input type="date" name="effective_to"
+                    class="px-3 py-2 rounded-lg border border-slate-200 outline-none text-xs font-medium font-sans">
             </div>
             <button type="submit"
                 class="px-5 py-2 bg-purple-700 text-white rounded-lg text-xs font-bold hover:bg-purple-800 transition-all">
