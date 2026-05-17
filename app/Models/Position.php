@@ -9,7 +9,7 @@ class Position extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['name', 'code', 'is_sales', 'team_bonus_base'];
+    protected $fillable = ['name', 'code', 'is_sales', 'team_bonus_base', 'default_hourly_rate', 'default_contract_type'];
 
     public function users()
     {

@@ -20,11 +20,18 @@
                 onchange="this.form.submit()">
         </div>
     </form>
-    {{-- Shortcut sang bảng lương --}}
-    <a href="{{ route('fe.payrolls.index', ['month' => $month, 'store_id' => $store->id]) }}"
-        class="flex items-center gap-2 px-4 py-2 bg-emerald-700 text-white rounded-xl font-bold text-sm hover:bg-emerald-800 transition-all shadow-sm">
-        💰 Bảng lương CH
-    </a>
+    <div class="flex items-center gap-2">
+        {{-- Bảng công tháng --}}
+        <a href="{{ route('fe.monthly.calendar', ['store' => $store->id, 'month' => $month]) }}"
+            class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-sm">
+            📋 Bảng công
+        </a>
+        {{-- Shortcut sang bảng lương --}}
+        <a href="{{ route('fe.payrolls.index', ['month' => $month, 'store_id' => $store->id]) }}"
+            class="flex items-center gap-2 px-4 py-2 bg-emerald-700 text-white rounded-xl font-bold text-sm hover:bg-emerald-800 transition-all shadow-sm">
+            💰 Bảng lương CH
+        </a>
+    </div>
 </div>
 
 {{-- Store summary cards --}}
@@ -123,10 +130,18 @@
                         @endif
                     </td>
                     <td class="px-4 py-3 text-center">
-                        <a href="{{ route('fe.profile', ['user_id' => $ed['user']->id, 'month' => $month]) }}"
-                            class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold hover:bg-emerald-200 transition-all">
-                            💰 Xem lương
-                        </a>
+                        <div class="flex items-center justify-center gap-1.5">
+                            <a href="{{ route('fe.monthly.calendar', ['store' => $store->id, 'month' => $month, 'user_id' => $ed['user']->id]) }}"
+                                class="px-2 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-[10px] font-bold hover:bg-indigo-700 hover:text-white transition-all"
+                                title="Xem bảng công cá nhân">
+                                📋
+                            </a>
+                            <a href="{{ route('fe.profile', ['user_id' => $ed['user']->id, 'month' => $month]) }}"
+                                class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-bold hover:bg-emerald-200 transition-all"
+                                title="Xem lương">
+                                💰
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 @empty

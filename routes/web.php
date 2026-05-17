@@ -10,6 +10,7 @@ use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MonthlyController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\SettingsController;
 
 Route::get('/', function () { return redirect('/staff-shift-kpi/login'); });
 
@@ -31,6 +32,8 @@ Route::prefix('staff-shift-kpi')->group(function () {
 
         // Monthly Dashboard
         Route::get('/monthly', [MonthlyController::class, 'index'])->name('monthly.index');
+        Route::get('/monthly/{store}/revenue', [MonthlyController::class, 'revenue'])->name('monthly.revenue');
+        Route::get('/monthly/{store}/calendar', [MonthlyController::class, 'calendar'])->name('monthly.calendar');
         Route::get('/monthly/{store}', [MonthlyController::class, 'show'])->name('monthly.show');
 
         // Payroll
@@ -66,5 +69,13 @@ Route::prefix('staff-shift-kpi')->group(function () {
         Route::get('/admin/permissions/{role}', [PermissionController::class, 'show'])->name('admin.permissions.show');
         Route::post('/admin/permissions/{role}', [PermissionController::class, 'update'])->name('admin.permissions.update');
         Route::get('/admin/permissions/{role}/reset', [PermissionController::class, 'resetDefault'])->name('admin.permissions.reset');
+
+        // ── Settings (Cài đặt catalog) ──
+        Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::put('/settings/positions/{position}', [SettingsController::class, 'updatePosition'])->name('settings.positions.update');
+        Route::put('/settings/brackets/{id}', [SettingsController::class, 'updateBracket'])->name('settings.brackets.update');
+        Route::post('/settings/brackets', [SettingsController::class, 'storeBracket'])->name('settings.brackets.store');
+        Route::delete('/settings/brackets/{id}', [SettingsController::class, 'destroyBracket'])->name('settings.brackets.destroy');
+        Route::delete('/settings/brackets/group/{position_code}/{contract_type}', [SettingsController::class, 'destroyGroup'])->name('settings.brackets.destroy_group');
     });
 });

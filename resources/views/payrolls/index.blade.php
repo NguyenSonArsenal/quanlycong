@@ -221,9 +221,9 @@
                     </td>
                     {{-- Chi tiết --}}
                     <td class="px-3 py-2.5 text-center">
-                        <a href="{{ route('fe.profile', ['user_id' => $d['user']->id, 'month' => $month]) }}"
-                            class="px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-[9px] font-bold hover:bg-blue-200 transition-all whitespace-nowrap">
-                            📄 Hồ sơ
+                        <a href="{{ route('fe.monthly.index', ['store_id' => $d['user']->store_id, 'user_id' => $d['user']->id, 'month' => $month]) }}"
+                            class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-lg text-[9px] font-bold hover:bg-indigo-700 hover:text-white transition-all whitespace-nowrap">
+                            📋 Chi tiết
                         </a>
                     </td>
                 </tr>

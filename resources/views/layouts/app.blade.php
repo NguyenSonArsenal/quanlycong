@@ -49,6 +49,9 @@
                 <a href="{{ route('fe.admin.permissions') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/admin/permissions*') ? 'bg-slate-800 text-rose-500' : '' }}">
                     🔐 Phân quyền
                 </a>
+                <a href="{{ route('fe.settings.index') }}" class="block px-4 py-2.5 rounded-lg hover:bg-slate-800 transition-colors {{ request()->is('*/settings*') ? 'bg-slate-800 text-rose-500' : '' }}">
+                    🛠️ Cài đặt catalog
+                </a>
                 @endif
             </nav>
             <div class="p-4 border-t border-slate-800">
@@ -73,7 +76,7 @@
                 </div>
             </header>
             <main class="flex-1 overflow-x-hidden overflow-y-auto p-8">
-                @if(session('success'))
+                @if(session('success') && !View::hasSection('has_local_alert'))
                     <div class="mb-6 bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg text-emerald-700">
                         {{ session('success') }}
                     </div>
@@ -82,5 +85,6 @@
             </main>
         </div>
     </div>
+    @stack('scripts')
 </body>
 </html>

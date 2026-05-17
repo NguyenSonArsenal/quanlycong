@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Quản lý KPI')
+@section('has_local_alert', true)
 @section('content')
 @php
     $dr  = []; foreach(($dailyRatios??$config->daily_ratios??[]) as $k=>$v) { $dr[(int)$k]=(float)$v; }

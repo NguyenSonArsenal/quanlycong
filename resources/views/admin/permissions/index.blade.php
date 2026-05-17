@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Quản lý Nhóm chức vụ & Phân quyền')
+@section('has_local_alert', true)
 @section('content')
 
 {{-- Flash alerts --}}

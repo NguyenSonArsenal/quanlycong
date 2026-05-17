@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Cấu hình KPI')
+@section('has_local_alert', true)
 @section('content')
 
 {{-- Header --}}
