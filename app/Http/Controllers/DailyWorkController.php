@@ -310,14 +310,19 @@ class DailyWorkController extends Controller
         $date    = $request->date;
 
         // Kiểm tra xem tháng của ngày này có bị khóa hoàn toàn chưa
+        // Tháng bị khóa khi TẤT CẢ 5 tuần đã có trong locked_weeks
         $month = date('Y-m', strtotime($date));
-        $totalShifts = ShiftRecord::where('store_id', $storeId)->where('date', 'like', "$month%")->count();
-        $lockedShifts = ShiftRecord::where('store_id', $storeId)->where('date', 'like', "$month%")->where('is_locked', true)->count();
-        if ($totalShifts > 0 && $totalShifts === $lockedShifts) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => '❌ Tháng này đã được khóa. Không thể thực hiện khóa ngày!'
-            ], 403);
+        $kpiConfigCheck = \App\Models\KpiConfig::where('store_id', $storeId)
+            ->where('month', $month)
+            ->first();
+        if ($kpiConfigCheck) {
+            $lockedWeeks = $kpiConfigCheck->locked_weeks ?? [];
+            if (count($lockedWeeks) >= 5) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => '❌ Tháng này đã được khóa. Không thể thực hiện khóa ngày!'
+                ], 403);
+            }
         }
 
         // 1. Khóa toàn bộ shift records của ngày
@@ -471,37 +476,38 @@ class DailyWorkController extends Controller
 
         $weeklyTotal = $weeklyTargets->sum('target_amount');
 
-        $lockedSum = 0;
-        $unlockedDays = [];
+        // Tính DT thực tế từ đầu tuần đến ngày bị khóa (personal_revenue vì NV nhập tay)
+        $pastActual = ShiftRecord::where('store_id', $storeId)
+            ->whereBetween('date', [$weekStart, $date])
+            ->sum('personal_revenue');
 
+        // Đảm bảo các ngày đã qua (<= $date) có rebalanced_target hợp lệ (nếu chưa có thì gán bằng target_amount gốc)
+        // chứ KHÔNG gán bằng actualRevenue!
         foreach ($weeklyTargets as $t) {
             if ($t->date <= $date) {
-                $act = (float)ShiftRecord::where('store_id', $storeId)
-                    ->where('date', $t->date)
-                    ->sum('personal_revenue');
-                $t->rebalanced_target = $act;
-                $t->save();
-                $lockedSum += $act;
-            } else {
-                $unlockedDays[] = $t;
+                if (is_null($t->rebalanced_target)) {
+                    $t->rebalanced_target = $t->target_amount;
+                    $t->save();
+                }
             }
         }
 
-        // KPI còn lại cần đạt trong các ngày chưa khóa
-        $remaining = max(0, $weeklyTotal - $lockedSum);
+        // KPI còn lại cần đạt trong các ngày tới (> $date)
+        $remaining = max(0, $weeklyTotal - $pastActual);
+        $futureDays = $weeklyTargets->where('date', '>', $date);
 
-        if (count($unlockedDays) > 0) {
-            // Tổng trọng số các ngày chưa khóa
-            $totalW = collect($unlockedDays)->sum(function ($d) use ($dailyRatios) {
+        if ($futureDays->count() > 0) {
+            // Tổng trọng số các ngày còn lại
+            $totalW = $futureDays->sum(function ($d) use ($dailyRatios) {
                 $dow = Carbon::parse($d->date)->isoWeekday();
                 return $dailyRatios[$dow] ?? 1.0;
             });
 
-            foreach ($unlockedDays as $ud) {
-                $dow = Carbon::parse($ud->date)->isoWeekday();
+            foreach ($futureDays as $ft) {
+                $dow = Carbon::parse($ft->date)->isoWeekday();
                 $w   = $dailyRatios[$dow] ?? 1.0;
-                $ud->rebalanced_target = $totalW > 0 ? round($remaining * $w / $totalW, 2) : 0;
-                $ud->save();
+                $ft->rebalanced_target = $totalW > 0 ? round($remaining * $w / $totalW, 2) : 0;
+                $ft->save();
             }
         }
     }

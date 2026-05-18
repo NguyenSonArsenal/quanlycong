@@ -368,13 +368,10 @@ class KpiController extends Controller
         foreach (range(1, 5) as $w) {
             $wDates = $allTargets->filter(fn($t) => ($weekByDate[$t->date] ?? 0) === $w);
             if ($w <= $maxLockedWeek) {
-                // Các tuần đã qua hoặc đã khóa: giữ nguyên chỉ tiêu, không ghi đè rebalanced_target
-                // Chỉ đảm bảo rebalanced_target có giá trị hợp lệ nếu chưa có
+                // Tuần đã khóa: KHÔNG ghi đè rebalanced_target
+                // Giữ nguyên target_amount gốc, chỉ fill nếu còn null
                 foreach ($wDates as $ft) {
-                    if (in_array($ft->date, $lockedDates)) {
-                        continue;
-                    }
-                    if (is_null($ft->rebalanced_target) || $ft->rebalanced_target <= 0) {
+                    if (is_null($ft->rebalanced_target)) {
                         $ft->rebalanced_target = $ft->target_amount;
                         $ft->save();
                     }
@@ -545,10 +542,7 @@ class KpiController extends Controller
 
     private function isMonthLocked(KpiConfig $config): bool
     {
-        $month = $config->month;
-        $storeId = $config->store_id;
-        $totalShifts = ShiftRecord::where('store_id', $storeId)->where('date', 'like', "$month%")->count();
-        $lockedShifts = ShiftRecord::where('store_id', $storeId)->where('date', 'like', "$month%")->where('is_locked', true)->count();
-        return $totalShifts > 0 && $totalShifts === $lockedShifts;
+        $lockedWeeks = $config->locked_weeks ?? [];
+        return count($lockedWeeks) >= 5;
     }
 }

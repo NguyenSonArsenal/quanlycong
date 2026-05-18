@@ -146,18 +146,17 @@
     @php
         $weekData = $weeks[$w] ?? ['weight'=>$wr[$w]??20,'targets'=>[]];
         $weekWt   = (float)($wr[$w] ?? 20);
-        $weekAmt  = round($total * $weekWt / 100);
         $tgts     = collect($weekData['targets']);
-        
+
         $isWeekAlreadyLocked = in_array($w, $config->locked_weeks ?? []);
         $actualRevenueThisWeek = $tgts->sum(fn($t) => $t ? ($actualByDate[$t->date] ?? 0) : 0);
-        
+
         $byDow=[]; $presentDows=[]; $dateMap=[]; $targetObjMap=[];
         foreach($tgts as $t) {
             if (!$t) continue;
             $dow = \Carbon\Carbon::parse($t->date)->isoWeekday();
             $actualRevenue = (float)($actualByDate[$t->date] ?? 0);
-            
+
             $effectiveTarget = !is_null($t->rebalanced_target)
                 ? (float)$t->rebalanced_target
                 : (float)$t->target_amount;
@@ -167,6 +166,19 @@
             if(!in_array($dow,$presentDows)) $presentDows[]=$dow;
         }
         sort($presentDows);
+
+        // $weekAmt: nếu tuần đã khóa → target gốc cố định, ngược lại → tổng rebalanced của các ngày trong tuần
+        if ($isWeekAlreadyLocked) {
+            $weekAmt = round($total * $weekWt / 100);
+        } else {
+            // Tính từ rebalanced_target thực tế trong DB
+            $weekAmt = array_sum($byDow);
+            // Nếu chưa có rebalanced data thì fallback về target gốc
+            if ($weekAmt <= 0) {
+                $weekAmt = round($total * $weekWt / 100);
+            }
+        }
+
         // Kiem tra tat ca cac ngay co data deu da locked chua
         $weekDatesFormatted = array_values($dateMap);
         $isAllDaysLocked = count($weekDatesFormatted) > 0 && count(array_filter($weekDatesFormatted, fn($d) => isset($lockedDates[$d]))) === count($weekDatesFormatted);
@@ -203,15 +215,12 @@
                         class="week-w w-20 px-2 py-1 rounded border border-blue-200 font-black text-blue-700 text-center text-xs outline-none shadow-sm {{ $config->is_saved ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : '' }}" oninput="recalc()" {{ $config->is_saved ? 'disabled' : '' }}>
                     <span class="text-[9px] font-bold text-slate-400">%</span>
                 </div>
-                @php
-                    $weekCurrentTarget = array_sum($byDow);
-                @endphp
-                <div class="week-amt font-black mt-0.5 tracking-tight text-center" data-w="{{ $w }}" data-actual="{{ $actualRevenueThisWeek }}" data-init-target="{{ $weekCurrentTarget }}">
+                <div class="week-amt font-black mt-0.5 tracking-tight text-center" data-w="{{ $w }}" data-actual="{{ $actualRevenueThisWeek }}" data-init-target="{{ $weekAmt }}">
                     @if($actualRevenueThisWeek > 0)
-                        <div class="text-[11px] text-slate-600 font-bold">Target: {{ number_format($weekCurrentTarget,0,',','.') }}</div>
+                        <div class="text-[11px] text-slate-600 font-bold">Target: {{ number_format($weekAmt,0,',','.') }}</div>
                         <div class="text-[12px] text-emerald-700 font-extrabold mt-0.5">DT: {{ number_format($actualRevenueThisWeek,0,',','.') }}</div>
                     @else
-                        <div class="text-emerald-700 text-xs font-black">{{ number_format($weekCurrentTarget,0,',','.') }}</div>
+                        <div class="text-emerald-700 text-xs font-black">{{ number_format($weekAmt,0,',','.') }}</div>
                     @endif
                 </div>
                 <div class="week-days-badge text-[8px] font-bold {{ count($presentDows)<7 ? 'text-amber-500' : 'text-slate-300' }}" data-w="{{ $w }}">{{ count($presentDows) }} ngay</div>
@@ -285,7 +294,7 @@ const WEEK_ACTUALS = {
 };
 const DB_WEEK_TARGETS = {
     @for($w=1;$w<=5;$w++)
-        '{{ $w }}': {{ $weeks[$w] ? collect($weeks[$w]['targets'])->sum(fn($t) => $t ? ((!is_null($t->rebalanced_target)) ? $t->rebalanced_target : $t->target_amount) : 0) : 0 }},
+        '{{ $w }}': {{ $weeks[$w] ? round($config->total_target * ($wr[$w] ?? 20) / 100) : 0 }},
     @endfor
 };
 
@@ -459,14 +468,11 @@ function recalc(){
 
     for(let w=1;w<=5;w++){
         let wAmt = 0;
-        if (IS_SAVED || w <= maxLockedWeek) {
-            if (LOCKED_WEEKS.includes(w)) {
-                wAmt = WEEK_ACTUALS[w] || 0;
-            } else {
-                wAmt = DB_WEEK_TARGETS[w] || 0;
-            }
+        if (w <= maxLockedWeek) {
+            // Tuần đã khóa: luôn hiển thị TARGET CỐ ĐỊNH gốc
+            wAmt = DB_WEEK_TARGETS[w] || 0;
         } else {
-            // Chia đều KPI còn lại theo tỷ lệ tương lai
+            // Tuần chưa khóa: tính lại dựa trên KPI còn lại sau các tuần đã khóa
             wAmt = futureWeightSum > 0 ? futureKPI * (ww[w-1] || 0) / futureWeightSum : 0;
         }
 
@@ -499,15 +505,18 @@ function recalc(){
 
         // Tiền từng ngày:
         document.querySelectorAll(`.day-kpi[data-w="${w}"]`).forEach(cell => {
-            const dow = parseInt(cell.dataset.dow);
-            if(!pDays.includes(dow)) return;
-            
             const actual = parseInt(cell.dataset.actual) || 0;
             let val = 0;
 
-            if (IS_SAVED || w <= maxLockedWeek) {
+            if (w <= maxLockedWeek) {
+                // Tuần đã khóa: dùng data-init-target (target gốc DB, không rebalance)
+                val = Math.round(parseFloat(cell.dataset.initTarget) || 0);
+            } else if (cell.dataset.initTarget && parseFloat(cell.dataset.initTarget) > 0) {
+                // Tuần chưa khóa nhưng đã rebalanced từ backend: dùng giá trị từ DB
                 val = Math.round(parseFloat(cell.dataset.initTarget) || 0);
             } else {
+                // Chưa có dữ liệu: tính proportional theo wAmt
+                const dow = parseInt(cell.dataset.dow);
                 const dAmt = wDS > 0 ? wAmt * (dw[dow]||1) / wDS : 0;
                 val = Math.round(dAmt);
             }
