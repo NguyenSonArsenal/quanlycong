@@ -14,16 +14,23 @@
         </div>
         <div class="w-52">
             <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Cửa hàng</label>
-            <select name="store_id"
-                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 outline-none font-bold text-slate-700 text-sm"
-                onchange="this.form.submit()">
-                <option value="">-- Chọn --</option>
-                @foreach($stores as $s)
-                    <option value="{{ $s->id }}" {{ $storeId == $s->id ? 'selected' : '' }}>
-                        {{ $s->code }} – {{ $s->name }}
-                    </option>
-                @endforeach
-            </select>
+            @if($stores->count() === 1)
+                {{-- QLCH / CHP: chỉ có 1 cửa hàng, hiện tên luôn, không cần dropdown --}}
+                <div class="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 font-bold text-slate-700 text-sm">
+                    {{ $stores->first()->code }} – {{ $stores->first()->name }}
+                </div>
+                <input type="hidden" name="store_id" value="{{ $stores->first()->id }}">
+            @else
+                {{-- Admin / Area Manager: dropdown Select2 --}}
+                <select name="store_id" id="select-store-payroll" style="width:100%">
+                    <option value="">-- Chọn --</option>
+                    @foreach($stores as $s)
+                        <option value="{{ $s->id }}" {{ $storeId == $s->id ? 'selected' : '' }}>
+                            {{ $s->code }} – {{ $s->name }}
+                        </option>
+                    @endforeach
+                </select>
+            @endif
         </div>
         @if($storeId)
         <div class="flex-1 min-w-[160px]">
@@ -277,3 +284,29 @@
 @endif
 
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    @if($stores->count() > 1)
+    // Select2 cho dropdown cửa hàng (Admin / Area Manager)
+    $('#select-store-payroll').select2({
+        placeholder: '-- Chọn cửa hàng --',
+        allowClear: false,
+        width: '100%',
+        language: {
+            searching: function() { return 'Đang tìm...'; },
+            noResults: function() { return 'Không tìm thấy'; }
+        }
+    }).on('select2:select', function () {
+        $(this).closest('form').submit();
+    });
+    @endif
+
+    @if($stores->count() === 1 && !$storeId)
+    // Auto-submit khi QLCH/CHP vào trang lần đầu chưa có store_id trong URL
+    document.querySelector('form').submit();
+    @endif
+});
+</script>
+@endpush

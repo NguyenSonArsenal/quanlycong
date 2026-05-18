@@ -26,14 +26,6 @@
                 <p class="text-[11px] text-slate-400 mt-0.5">{{ $role->description }}</p>
             </div>
         </div>
-        
-        <div class="flex items-center gap-3">
-            <a href="{{ route('fe.admin.permissions.reset', $role->id) }}"
-               onclick="return confirm('Bạn có chắc muốn Reset toàn bộ quyền của nhóm này về trạng thái cấu hình mặc định?')"
-               class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-[11px] font-bold text-amber-700 rounded-xl active:scale-95 transition-all">
-                🔄 Reset về mặc định
-            </a>
-        </div>
     </div>
 </div>
 

@@ -2,7 +2,11 @@
 @section('title', 'Nhập công ' . \Carbon\Carbon::parse($date)->format('d/m/Y') . ' - KRIK')
 
 @php
-    $isManager  = in_array(auth()->user()->role, ['admin', 'store_manager', 'hr']);
+    $authUser   = auth()->user();
+    $isManager  = in_array($authUser->role, ['admin', 'store_manager', 'hr']) 
+                  || in_array($authUser->getGroupRoleName(), ['QLCH', 'CHP']);
+    $canViewStats = in_array($authUser->role, ['admin', 'store_manager', 'hr', 'area_manager']) 
+                    || in_array($authUser->getGroupRoleName(), ['QLCH', 'CHP']);
     $kpiTarget  = $dailyTarget ? (float)($dailyTarget->rebalanced_target ?: $dailyTarget->target_amount) : 0;
     $storeRev   = $totals['store_revenue'] ?? 0;
     $kpiStorePct= $kpiTarget > 0 ? round($storeRev / $kpiTarget * 100, 1) : 0;
@@ -36,6 +40,7 @@
 
     {{-- Stats row --}}
     @if($storeId)
+    @if($canViewStats)
     <div class="grid grid-cols-2 md:grid-cols-5 gap-0 divide-x divide-slate-100">
         {{-- KPI target ngày --}}
         <div class="px-5 py-4">
@@ -64,6 +69,7 @@
             <div class="text-lg font-black text-purple-600" id="stat-products">{{ $totals['products'] ?? 0 }}</div>
         </div>
     </div>
+    @endif
 
     {{-- Action bar (QLCH only) --}}
     @if($isManager && !$isLocked)
@@ -242,6 +248,7 @@
         </tbody>
 
         {{-- Footer tổng --}}
+        @if($canViewStats)
         <tfoot class="bg-slate-800 text-white text-[9px] font-bold">
             <tr>
                 <td class="px-4 py-2 sticky left-0 bg-slate-800 uppercase tracking-wider">Tổng</td>
@@ -261,6 +268,7 @@
                 @if($isManager && !$isLocked)<td></td>@endif
             </tr>
         </tfoot>
+        @endif
     </table>
     </div>
 </div>

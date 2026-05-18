@@ -69,13 +69,14 @@ class User extends Authenticatable
 
         $roleName = $this->getGroupRoleName();
 
-        // Cache tĩnh cho request
-        static $rolePermissions = null;
-        if ($rolePermissions === null) {
+        // Cache tĩnh cho request theo roleName để tránh ô nhiễm chéo giữa các user/role khác nhau
+        static $cachedPermissions = [];
+        if (!isset($cachedPermissions[$roleName])) {
             $role = Role::where('name', $roleName)->with('permissions')->first();
-            $rolePermissions = $role ? $role->permissions->pluck('name') : collect();
+            $cachedPermissions[$roleName] = $role ? $role->permissions->pluck('name') : collect();
         }
 
+        $rolePermissions = $cachedPermissions[$roleName];
         $check = is_array($abilities) ? $abilities : [$abilities];
 
         foreach ($check as $p) {
@@ -92,5 +93,57 @@ class User extends Authenticatable
     {
         $roles = is_array($role) ? $role : [$role];
         return in_array($this->role, $roles);
+    }
+
+    /**
+     * Kiểm tra quyền quản lý một nhân sự cụ thể
+     */
+    public function canManageUser(User $targetUser): bool
+    {
+        // 1. Admin luôn có toàn quyền
+        if ($this->role === 'admin') {
+            return true;
+        }
+
+        // 2. Tự quản lý chính mình
+        if ($this->id === $targetUser->id) {
+            return true;
+        }
+
+        // 3. Area Manager
+        if ($this->role === 'area_manager') {
+            // Sửa NV trong các store thuộc khu vực của mình
+            if ($this->store && $targetUser->store && $this->store->area_id === $targetUser->store->area_id) {
+                // Area Manager có thể sửa bất kỳ ai trong khu vực ngoại trừ admin và area_manager khác
+                return $targetUser->role !== 'admin' && $targetUser->role !== 'area_manager';
+            }
+            return false;
+        }
+
+        // 4. Store Manager (QLCH)
+        if ($this->getGroupRoleName() === 'QLCH') {
+            // Phải cùng store
+            if ($this->store_id && $this->store_id == $targetUser->store_id) {
+                // Không sửa được QLCH đồng cấp khác
+                $targetGroup = $targetUser->getGroupRoleName();
+                return $targetGroup !== 'admin' && $targetGroup !== 'area_manager' && $targetGroup !== 'QLCH';
+            }
+            return false;
+        }
+
+        // 5. Phó quản lý (CHP)
+        if ($this->getGroupRoleName() === 'CHP') {
+            // Phải cùng store
+            if ($this->store_id && $this->store_id == $targetUser->store_id) {
+                // Không sửa được QLCH (cấp trên) và CHP đồng cấp khác
+                $targetGroup = $targetUser->getGroupRoleName();
+                return !in_array($targetGroup, ['admin', 'area_manager', 'QLCH', 'CHP']);
+            }
+            return false;
+        }
+
+        // 6. Nhân viên thường (Sales Staff / Cashier / Guard etc.)
+        // Chỉ sửa được chính mình (đã check ở bước 2)
+        return false;
     }
 }

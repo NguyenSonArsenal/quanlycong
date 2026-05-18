@@ -22,7 +22,37 @@ class MonthlyController extends Controller
         $dateFrom  = $request->get('date_from');  // Y-m-d
         $dateTo    = $request->get('date_to');    // Y-m-d
 
-        $stores   = Store::orderBy('code')->get();
+        $authUser = auth()->user();
+        if ($authUser->role === 'area_manager') {
+            // Area Manager: giới hạn storeId chỉ nằm trong các store của area của mình
+            if ($storeId) {
+                $targetStore = Store::find($storeId);
+                if (!$targetStore || $targetStore->area_id !== ($authUser->store ? $authUser->store->area_id : null)) {
+                    $storeId = $authUser->store ? Store::where('area_id', $authUser->store->area_id)->value('id') : null;
+                }
+            } else {
+                $storeId = $authUser->store ? Store::where('area_id', $authUser->store->area_id)->value('id') : null;
+            }
+        } elseif (!$authUser->can('manage_all_stores')) {
+            // QLCH / CHP / Nhân viên: Chỉ được xem store của mình
+            $storeId = $authUser->store_id;
+            if (!$authUser->can('manage_own_store')) {
+                // Nhân viên thường: Chỉ được xem chính mình
+                $userId = $authUser->id;
+            }
+        }
+
+        // Giới hạn dropdown stores theo phân quyền
+        if ($authUser->role === 'admin') {
+            $stores = Store::orderBy('code')->get();
+        } elseif ($authUser->role === 'area_manager') {
+            $areaId = $authUser->store ? $authUser->store->area_id : null;
+            $stores = Store::where('area_id', $areaId)->orderBy('code')->get();
+        } else {
+            // QLCH / CHP / nhân viên: chỉ thấy store của mình
+            $stores = Store::where('id', $authUser->store_id)->orderBy('code')->get();
+        }
+
         $allUsers = collect();
         $rows     = [];
         $grandTotalDT    = 0;
@@ -31,15 +61,28 @@ class MonthlyController extends Controller
         $kpiPctStore     = 0;
         $selectedStore   = null;
         $selectedUser    = null;
+        $storeSummaries  = [];
 
         if ($storeId) {
             $selectedStore = Store::find($storeId);
 
-            $allUsers = User::with('position')
+            $allUsersQuery = User::with('position')
                 ->where('store_id', $storeId)
                 ->where('status', 1)
-                ->orderBy('full_name')
-                ->get();
+                ->orderBy('full_name');
+
+            if (!$authUser->can('manage_all_stores') && !$authUser->can('manage_own_store')) {
+                $allUsersQuery->where('id', $authUser->id);
+            }
+            $allUsers = $allUsersQuery->get();
+
+            // Đảm bảo người dùng đang đăng nhập luôn xuất hiện trong dropdown nhân viên
+            if ($authUser && $allUsers->where('id', $authUser->id)->isEmpty()) {
+                $selfUser = User::with('position')->find($authUser->id);
+                if ($selfUser) {
+                    $allUsers = collect([$selfUser])->merge($allUsers)->sortBy('full_name')->values();
+                }
+            }
 
             $userScope  = $userId ? [$userId] : $allUsers->pluck('id')->toArray();
             $usersKeyed = $allUsers->keyBy('id');
@@ -186,6 +229,15 @@ class MonthlyController extends Controller
 
     public function show(Request $request, \App\Models\Store $store)
     {
+        $authUser = auth()->user();
+        $isAreaStore = false;
+        if ($authUser->role === 'area_manager' && $authUser->store && $store->area_id === $authUser->store->area_id) {
+            $isAreaStore = true;
+        }
+        if (!$authUser->can('manage_all_stores') && !($authUser->can('manage_own_store') && $authUser->store_id == $store->id) && !$isAreaStore) {
+            abort(403, '❌ Bạn không có quyền truy cập thông tin cửa hàng này.');
+        }
+
         $month = $request->get('month', date('Y-m'));
 
         $kpiConfig    = KpiConfig::where('store_id', $store->id)->where('month', $month)->first();
@@ -232,6 +284,15 @@ class MonthlyController extends Controller
     // ── Bảng doanh thu theo ngày (Cal_Bảng doanh thu) ──
     public function revenue(Request $request, \App\Models\Store $store)
     {
+        $authUser = auth()->user();
+        $isAreaStore = false;
+        if ($authUser->role === 'area_manager' && $authUser->store && $store->area_id === $authUser->store->area_id) {
+            $isAreaStore = true;
+        }
+        if (!$authUser->can('manage_all_stores') && !($authUser->can('manage_own_store') && $authUser->store_id == $store->id) && !$isAreaStore) {
+            abort(403, '❌ Bạn không có quyền xem bảng doanh thu cửa hàng này.');
+        }
+
         $month = $request->get('month', date('Y-m'));
 
         // Lấy toàn bộ shift records của store trong tháng
@@ -306,6 +367,18 @@ class MonthlyController extends Controller
         $month  = $request->get('month', date('Y-m'));
         $userId = $request->get('user_id');   // null = toàn bộ NV
 
+        $authUser = auth()->user();
+        $isAreaStore = false;
+        if ($authUser->role === 'area_manager' && $authUser->store && $store->area_id === $authUser->store->area_id) {
+            $isAreaStore = true;
+        }
+        if (!$authUser->can('manage_all_stores') && !($authUser->can('manage_own_store') && $authUser->store_id == $store->id) && !$isAreaStore) {
+            if ($authUser->store_id != $store->id) {
+                abort(403, '❌ Bạn không có quyền xem bảng công cửa hàng này.');
+            }
+            $userId = $authUser->id; // Hạn chế nhân viên thường chỉ xem được của chính mình
+        }
+
         // ── Load users ──
         $usersQuery = User::with('position')
             ->where('store_id', $store->id)
@@ -317,11 +390,15 @@ class MonthlyController extends Controller
         }
 
         $users   = $usersQuery->get()->keyBy('id');
-        $allUsers = User::with('position')
+        $allUsersQuery = User::with('position')
             ->where('store_id', $store->id)
             ->where('status', 1)
-            ->orderBy('full_name')
-            ->get(); // dùng cho dropdown filter
+            ->orderBy('full_name');
+
+        if (!$authUser->can('manage_all_stores') && !($authUser->can('manage_own_store') && $authUser->store_id == $store->id) && !$isAreaStore) {
+            $allUsersQuery->where('id', $authUser->id);
+        }
+        $allUsers = $allUsersQuery->get();
 
         // ── Load shift records ──
         $shiftsQuery = ShiftRecord::where('store_id', $store->id)

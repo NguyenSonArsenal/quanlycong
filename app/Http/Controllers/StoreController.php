@@ -7,9 +7,32 @@ use Illuminate\Http\Request;
 
 class StoreController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (!auth()->user()->can(['manage_all_stores', 'manage_own_store'])) {
+                abort(403, '❌ Bạn không có quyền quản lý cửa hàng.');
+            }
+            return $next($request);
+        });
+    }
+
     public function index(Request $request)
     {
         $query = Store::query();
+        $authUser = auth()->user();
+
+        // Phân quyền hiển thị danh sách cửa hàng
+        if ($authUser->role === 'admin') {
+            // Admin thấy toàn bộ
+        } elseif ($authUser->role === 'area_manager') {
+            // Area Manager thấy các store cùng khu vực
+            $areaId = $authUser->store ? $authUser->store->area_id : null;
+            $query->where('area_id', $areaId);
+        } else {
+            // QLCH / CHP chỉ thấy duy nhất cửa hàng của mình
+            $query->where('id', $authUser->store_id);
+        }
 
         // Lọc theo từ khóa (Mã hoặc Tên cửa hàng)
         if ($request->filled('search')) {
@@ -27,10 +50,20 @@ class StoreController extends Controller
 
         $stores = $query->orderBy('code')->get();
 
-        // Lấy danh sách các khu vực duy nhất trong db để đổ ra bộ lọc
-        $areas = Store::whereNotNull('area_id')
-            ->where('area_id', '<>', '')
-            ->distinct()
+        // Lấy danh sách các khu vực duy nhất trong db để đổ ra bộ lọc theo phạm vi quyền
+        $areasQuery = Store::whereNotNull('area_id')
+            ->where('area_id', '<>', '');
+
+        if ($authUser->role === 'admin') {
+            // Admin thấy tất cả khu vực
+        } elseif ($authUser->role === 'area_manager') {
+            $areaId = $authUser->store ? $authUser->store->area_id : null;
+            $areasQuery->where('area_id', $areaId);
+        } else {
+            $areasQuery->where('id', $authUser->store_id);
+        }
+
+        $areas = $areasQuery->distinct()
             ->orderBy('area_id')
             ->pluck('area_id');
 

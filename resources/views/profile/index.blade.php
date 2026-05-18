@@ -30,7 +30,10 @@
         </div>
         {{-- Info --}}
         <div class="flex-1 min-w-0">
-            <h1 class="text-white font-black text-xl leading-tight">{{ $user->full_name }}</h1>
+            <h1 class="text-white font-black text-xl leading-tight flex items-center gap-2">
+                {{ $user->full_name }}
+                <span class="text-slate-300 font-mono text-xs font-normal">({{ '@' . $user->username }})</span>
+            </h1>
             <div class="flex flex-wrap items-center gap-3 mt-1">
                 <span class="text-[10px] text-slate-300 font-bold uppercase">{{ $user->position->name ?? 'Nhân viên' }}</span>
                 <span class="text-slate-500">·</span>
@@ -57,16 +60,13 @@
     </div>
 
     {{-- ── KPI + Lương summary ── --}}
+    @if($isSales)
     <div class="grid grid-cols-2 md:grid-cols-5 divide-x divide-slate-100">
         {{-- KPI % --}}
         <div class="px-5 py-4 text-center">
             <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">KPI Cá nhân</p>
-            @if($isSales)
             <p class="font-black text-3xl leading-none {{ $kpiColor }}">{{ $personalKpiPct }}%</p>
             <p class="text-[8px] text-slate-400 mt-1">T: {{ number_format($totalTarget, 0, ',', '.') }}đ</p>
-            @else
-            <p class="text-slate-300 font-bold text-lg">N/A</p>
-            @endif
         </div>
 
         {{-- Công/Giờ --}}
@@ -79,12 +79,8 @@
         {{-- DT cá nhân --}}
         <div class="px-5 py-4 text-center">
             <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">DT Cá nhân</p>
-            @if($isSales)
             <p class="font-black text-xl text-emerald-700">{{ number_format($totalRevenue, 0, ',', '.') }}</p>
             <p class="text-[8px] text-slate-400 mt-0.5">đồng</p>
-            @else
-            <span class="text-slate-300">—</span>
-            @endif
         </div>
 
         {{-- Lương cứng --}}
@@ -103,10 +99,46 @@
             <p class="text-[8px] text-slate-400 mt-0.5">đồng</p>
         </div>
     </div>
+    @else
+    <div class="grid grid-cols-1 md:grid-cols-3 divide-x divide-slate-100">
+        {{-- Công/Giờ --}}
+        <div class="px-5 py-4 text-center">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Công / Giờ</p>
+            <p class="font-black text-xl text-blue-700">{{ $workDays }} <span class="text-sm font-bold">ngày</span></p>
+            <p class="text-[10px] text-blue-500 font-bold mt-0.5">{{ number_format($totalHours, 1) }}h tổng</p>
+        </div>
+
+        {{-- Lương cơ bản / Giờ --}}
+        <div class="px-5 py-4 text-center">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Lương cơ bản / Giờ</p>
+            <p class="font-black text-xl text-slate-700">{{ number_format($hourlyRate, 0, ',', '.') }}đ/h</p>
+            <p class="text-[8px] text-slate-400 mt-0.5">Mức lương cứng theo giờ làm việc</p>
+        </div>
+
+        {{-- Tổng lương dự kiến nhận --}}
+        <div class="px-5 py-4 text-center bg-emerald-50/50">
+            <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Tổng lương dự kiến</p>
+            <p class="font-black text-2xl text-emerald-700">{{ number_format($totalSalary, 0, ',', '.') }}</p>
+            <p class="text-[8px] text-slate-400 mt-0.5">đồng (đã bao gồm thưởng team nếu có)</p>
+        </div>
+    </div>
+    @endif
 </div>
 
 {{-- ══ SALARY BREAKDOWN ══ --}}
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+@php
+    $showTeamBonusCard = $user->position && $user->position->team_bonus_base > 0;
+    $gridCols = 1;
+    if ($isSales && $showTeamBonusCard) {
+        $gridCols = 3;
+    } elseif ($isSales || $showTeamBonusCard) {
+        $gridCols = 2;
+    } else {
+        $gridCols = 1;
+    }
+@endphp
+
+<div class="grid grid-cols-1 md:grid-cols-{{ $gridCols }} gap-4 mb-5">
     {{-- Lương cứng card --}}
     <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
         <div class="flex items-center gap-2 mb-3">
@@ -118,12 +150,12 @@
     </div>
 
     {{-- Hoa hồng card --}}
+    @if($isSales)
     <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
         <div class="flex items-center gap-2 mb-3">
             <div class="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 text-sm">💰</div>
             <span class="font-bold text-slate-700 text-sm">Hoa hồng</span>
         </div>
-        @if($isSales)
         <div class="text-2xl font-black text-purple-700 mb-1">{{ number_format($commission, 0, ',', '.') }}đ</div>
         <div class="text-[10px] text-slate-500">
             {{ number_format($totalRevenue, 0, ',', '.') }} × {{ $commRate }}%
@@ -131,12 +163,11 @@
             <span class="text-rose-400 ml-1">(KPI &lt; 90% → 0%)</span>
             @endif
         </div>
-        @else
-        <div class="text-slate-300 text-lg font-bold">Non-sales</div>
-        @endif
     </div>
+    @endif
 
     {{-- Thưởng team card --}}
+    @if($showTeamBonusCard)
     <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
         <div class="flex items-center gap-2 mb-3">
             <div class="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 text-sm">🏆</div>
@@ -144,12 +175,13 @@
         </div>
         @if($teamBonus > 0)
         <div class="text-2xl font-black text-amber-600 mb-1">{{ number_format($teamBonus, 0, ',', '.') }}đ</div>
-        <div class="text-[10px] text-slate-500">KPI cửa hàng ≥ 90%</div>
+        <div class="text-[10px] text-slate-500">KPI cửa hàng đạt chuẩn</div>
         @else
         <div class="text-slate-400 text-sm font-bold mt-2">—</div>
         <div class="text-[10px] text-slate-400">Chưa đủ điều kiện</div>
         @endif
     </div>
+    @endif
 </div>
 
 

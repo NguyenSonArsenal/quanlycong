@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             StoreSeeder::class,
             PermissionSeeder::class,
             UserSeeder::class,
+            May2026K01Seeder::class,  // Sample data: K01 tháng 5/2026 (KPI + ca làm + bảng lương)
         ]);
 
         // Kích hoạt lại ràng buộc khóa ngoại

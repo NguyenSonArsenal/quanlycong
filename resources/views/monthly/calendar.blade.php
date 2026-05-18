@@ -32,9 +32,9 @@
             <input type="hidden" name="month" value="{{ $month }}">
             <div>
                 <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Lọc nhân viên</label>
-                <select name="user_id" onchange="this.form.submit()"
-                    class="px-3 py-1.5 rounded-lg border border-slate-200 outline-none font-medium text-slate-700 text-sm bg-white min-w-[160px]">
-                    <option value="">— Tất cả NV —</option>
+                <select name="user_id" id="select-user"
+                    class="min-w-[200px]" style="width: 200px">
+                    <option value="">— Tất cả nhân viên —</option>
                     @foreach($allUsers as $u)
                     <option value="{{ $u->id }}" {{ $userId == $u->id ? 'selected' : '' }}>
                         {{ $u->full_name }} ({{ $u->username }})
@@ -319,3 +319,21 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    $('#select-user').select2({
+        placeholder: '— Tất cả nhân viên —',
+        allowClear: true,
+        width: '220px',
+        language: {
+            searching: function() { return 'Đang tìm kiếm...'; },
+            noResults: function() { return 'Không tìm thấy nhân viên'; }
+        }
+    }).on('select2:select select2:clear', function () {
+        $(this).closest('form').submit();
+    });
+});
+</script>
+@endpush

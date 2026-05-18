@@ -13,19 +13,60 @@ use Illuminate\Support\Facades\DB;
 
 class PayrollController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (!auth()->user()->can(['view_payroll_all', 'view_payroll_store'])) {
+                abort(403, '❌ Bạn không có quyền xem bảng lương.');
+            }
+            return $next($request);
+        });
+    }
+
     public function index(Request $request)
     {
         $month   = $request->get('month', date('Y-m'));
         $storeId = $request->get('store_id');
         $search  = $request->get('q', '');
 
-        // QLCH chỉ thấy store của mình
         $authUser = auth()->user();
-        if ($authUser->role === 'store_manager' && !$storeId) {
+
+        // ── 1. Xác định scope storeId theo role (role ưu tiên hơn permission) ──
+        if ($authUser->role === 'admin') {
+            // Admin: xem tất cả, storeId lấy từ request
+        } elseif ($authUser->role === 'area_manager') {
+            // Area Manager: chỉ xem store trong khu vực
+            if ($storeId) {
+                $targetStore = Store::find($storeId);
+                if (!$targetStore || $targetStore->area_id !== ($authUser->store ? $authUser->store->area_id : null)) {
+                    abort(403, '❌ Bạn không có quyền xem bảng lương cửa hàng này.');
+                }
+            } else {
+                if ($authUser->store) {
+                    $storeId = Store::where('area_id', $authUser->store->area_id)->value('id');
+                }
+            }
+        } else {
+            // QLCH / CHP / Nhân viên: luôn bị giới hạn về store của mình, bất kể permission
             $storeId = $authUser->store_id;
+
+            // Nhân viên thường (không có view_payroll_store và view_payroll_all): chỉ xem chính mình
+            if (!$authUser->can('view_payroll_store') && !$authUser->can('view_payroll_all')) {
+                $search = $authUser->username;
+            }
         }
 
-        $stores             = Store::orderBy('code')->get();
+        // ── 2. Quyết định danh sách stores trong dropdown (theo role) ──
+        if ($authUser->role === 'admin') {
+            $stores = Store::orderBy('code')->get();
+        } elseif ($authUser->role === 'area_manager') {
+            $areaId = $authUser->store ? $authUser->store->area_id : null;
+            $stores = Store::where('area_id', $areaId)->orderBy('code')->get();
+        } else {
+            // QLCH / CHP / Nhân viên: chỉ thấy store của mình
+            $stores = Store::where('id', $authUser->store_id)->orderBy('code')->get();
+        }
+
         $payrollData        = [];
         $storeKpiPercentage = 0;
         $storeTarget        = 0;
@@ -47,8 +88,7 @@ class PayrollController extends Controller
             $storeRevenue= (float)$allShiftRecords->sum('personal_revenue');
             $storeKpiPercentage = $storeTarget > 0 ? ($storeRevenue / $storeTarget * 100) : 0;
 
-            // ── 3. Commission rate theo KPI cửa hàng (spec 4.4: bracket theo % KPI CH) ──
-            // Hypothetical rate nếu CH đạt 95%
+            // ── 3. Commission rate theo KPI cửa hàng ──
             $hypotheticalKpi = 95.0;
 
             // ── 4. Tính lương từng NV ──
@@ -97,21 +137,20 @@ class PayrollController extends Controller
                 $totalTarget    = (float)$userDailyKpi->sum('target_amount');
                 $personalKpiPct = $totalTarget > 0 ? round($totalRevenue / $totalTarget * 100, 1) : 0;
 
-                // Lương cứng = hourlyRate × total_hours (spec 5.4)
+                // Lương cứng = hourlyRate × total_hours
                 $hourlyRate = (float)($user->hourly_rate ?? 0);
                 $baseSalary = $hourlyRate * $totalHours;
 
-                // Commission = DT × bracket_rate theo % KPI cá nhân (spec 5.3)
-                // <90%: 0% | 90-100%: rate1 | 100-110%: rate2 | ...
+                // Commission = DT × bracket_rate theo % KPI cá nhân
                 $commRate        = $isSales ? $this->getCommissionRate($user, $personalKpiPct, $month) : 0;
                 $commission      = $totalRevenue * $commRate / 100;
 
-                // Commission giả định nếu cá nhân đạt 100% (optional)
+                // Commission giả định nếu cá nhân đạt 100%
                 $commRateHypo   = $isSales ? $this->getCommissionRate($user, 100.0, $month) : 0;
                 $commissionHypo = $totalRevenue * $commRateHypo / 100;
                 $totalSalaryHypo= $baseSalary + $commissionHypo;
 
-                // Thưởng team (chỉ QLCH có teamBonusBase > 0)
+                // Thưởng team
                 $teamBonus = 0;
                 if ($user->position && $user->position->team_bonus_base > 0) {
                     if ($storeKpiPercentage >= 100)     $teamBonus = (float)$user->position->team_bonus_base;
@@ -137,7 +176,6 @@ class PayrollController extends Controller
                     'base_salary'     => $baseSalary,
                     'team_bonus'      => $teamBonus,
                     'total_salary'    => $totalSalary,
-                    // Giả định 95% KPI cửa hàng
                     'comm_rate_hypo'  => $commRateHypo,
                     'total_hypo'      => $totalSalaryHypo,
                 ];
@@ -151,13 +189,12 @@ class PayrollController extends Controller
     }
 
     /**
-     * Tra bảng hoa hồng theo position_code + contract_type + KPI% cá nhân (spec 5.3)
-     * <90%: 0% | 90-100%: rate1 | 100-110%: rate2 | ...
+     * Tra bảng hoa hồng theo position_code + contract_type + KPI% cá nhân
      */
     private function getCommissionRate(User $user, float $personalKpiPct, string $month): float
     {
         if (!$user->position || !$user->position->is_sales) return 0;
-        if ($personalKpiPct < 90) return 0; // Spec 5.3: <90% = 0%
+        if ($personalKpiPct < 90) return 0; // <90% = 0%
 
         $monthStart = Carbon::parse($month . '-01')->toDateString();
 

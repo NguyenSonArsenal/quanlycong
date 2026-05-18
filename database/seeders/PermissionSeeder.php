@@ -51,7 +51,7 @@ class PermissionSeeder extends Seeder
                 'manage_all_stores', 'view_payroll_all', 'manage_staff',
             ],
             'QLCH' => [
-                'manage_own_store', 'bypass_locked_day', 'view_payroll_store', 'manage_staff',
+                'manage_own_store', 'bypass_locked_day', 'view_payroll_store', 'manage_staff', 'lock_day',
             ],
             'CHP' => [
                 'manage_own_store', 'view_payroll_store',

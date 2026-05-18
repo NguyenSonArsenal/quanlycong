@@ -9,6 +9,16 @@ use Illuminate\Support\Facades\DB;
 
 class SettingsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (auth()->user()->role !== 'admin') {
+                abort(403, '❌ Chỉ Admin mới có quyền cấu hình hệ thống.');
+            }
+            return $next($request);
+        });
+    }
+
     public function index()
     {
         $positions  = Position::orderBy('id')->get();
@@ -53,7 +63,14 @@ class SettingsController extends Controller
             'is_sales'              => $request->boolean('is_sales'),
         ]);
 
-        return back()->with('success', "Đã cập nhật cấu hình lương cho [{$position->name}]");
+        // Tự động đồng bộ lương giờ mới cho toàn bộ nhân sự đang hoạt động thuộc vị trí/chức danh này
+        \App\Models\User::where('position_id', $position->id)
+            ->where('status', 1)
+            ->update([
+                'hourly_rate' => $request->default_hourly_rate,
+            ]);
+
+        return back()->with('success', "Đã cập nhật cấu hình lương cho [{$position->name}] và tự động đồng bộ lương mới cho toàn bộ nhân sự thuộc vị trí này!");
     }
 
     // ── Cập nhật 1 bracket hoa hồng ──────────────────────────────

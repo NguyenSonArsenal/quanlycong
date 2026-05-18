@@ -12,6 +12,16 @@ use Illuminate\Support\Facades\DB;
 
 class KpiController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (!auth()->user()->can('config_kpi')) {
+                abort(403, '❌ Bạn không có quyền cấu hình KPI.');
+            }
+            return $next($request);
+        });
+    }
+
     public function index(Request $request)
     {
         $stores = Store::orderBy('code')->get();

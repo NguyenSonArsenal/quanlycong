@@ -22,7 +22,7 @@ class AuthController extends Controller {
             return redirect()->intended('/staff-shift-kpi/daily');
         }
 
-        return back()->withErrors(['username' => 'Thông tin đăng nhập không chính xác.']);
+        return back()->withErrors(['username' => 'Thông tin đăng nhập không chính xác.'])->withInput($request->only('username'));
     }
 
     public function logout(Request $request) {

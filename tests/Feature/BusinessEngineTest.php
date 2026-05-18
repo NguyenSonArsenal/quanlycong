@@ -270,7 +270,7 @@ class BusinessEngineTest extends TestCase
             'month' => '2026-05',
             'total_target' => 70000000,
             'weekly_ratios' => [1 => 20, 2 => 20, 3 => 20, 4 => 20, 5 => 20],
-            'daily_ratios' => [1 => 10, 2 => 10, 3 => 10, 4 => 10, 5 => 15, 6 => 15, 7 => 15],
+            'daily_ratios' => [1 => 10, 2 => 10, 3 => 10, 4 => 10, 5 => 10, 6 => 15, 7 => 15],
             'shift_ratios_weekday' => ['morning' => 10, 'afternoon' => 40, 'evening' => 50],
             'shift_ratios_weekend' => ['morning' => 12, 'afternoon' => 45, 'evening' => 43]
         ]);

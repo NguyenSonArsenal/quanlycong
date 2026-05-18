@@ -24,7 +24,7 @@
             <p class="text-slate-500">Hệ thống quản lý công & KPI</p>
         </div>
 
-        <form action="{{ url('/staff-shift-kpi/login') }}" method="POST" class="space-y-6">
+        <form id="login-form" action="{{ url('/staff-shift-kpi/login') }}" method="POST" class="space-y-6">
             @csrf
 
             <!-- Validation Errors (Top of form) -->
@@ -37,9 +37,9 @@
             <!-- Username -->
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">Tên đăng nhập</label>
-                <input type="text" name="username" value="{{ old('username') }}"
+                <input type="text" id="username" name="username" value="{{ old('username') }}"
                     class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
-                    placeholder="admin hoặc manager" required autofocus>
+                    placeholder="admin hoặc manager" required autofocus oninput="checkInputs()">
             </div>
 
             <!-- Password -->
@@ -48,7 +48,7 @@
                 <div class="relative">
                     <input type="password" id="password" name="password" 
                         class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
-                        placeholder="••••••••" required>
+                        placeholder="••••••••" required oninput="checkInputs()">
                     
                     <!-- Toggle Password Button -->
                     <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
@@ -60,9 +60,18 @@
                 </div>
             </div>
 
-            <button type="submit" 
-                class="w-full bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-rose-200 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
-                Đăng nhập hệ thống
+            <button type="submit" id="submit-btn" disabled
+                class="w-full bg-gradient-to-r from-rose-500 to-rose-600 text-white font-semibold py-3 rounded-xl shadow-lg shadow-rose-200 transition-all transform
+                       disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:scale-100
+                       hover:enabled:from-rose-600 hover:enabled:to-rose-700 hover:enabled:scale-[1.02] active:enabled:scale-[0.98]">
+                <span id="btn-text">Đăng nhập hệ thống</span>
+                <span id="btn-loading" class="hidden items-center justify-center gap-2">
+                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    Đang đăng nhập...
+                </span>
             </button>
         </form>
 
@@ -72,10 +81,30 @@
     </div>
 
     <script>
+        // Flag: đang submit thì khóa cứng, không cho bất kỳ thứ gì enable lại
+        let isSubmitting = false;
+
+        function checkInputs() {
+            if (isSubmitting) return; // Khóa cứng khi đang submit
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value;
+            document.getElementById('submit-btn').disabled = !(u.length > 0 && p.length > 0);
+        }
+
+        // Lắng nghe form submit (không dùng onclick — tránh browser block submission)
+        document.getElementById('login-form').addEventListener('submit', function () {
+            isSubmitting = true;
+            document.getElementById('btn-text').classList.add('hidden');
+            const loading = document.getElementById('btn-loading');
+            loading.classList.remove('hidden');
+            loading.classList.add('inline-flex');
+            document.getElementById('submit-btn').disabled = true;
+        });
+
         function togglePassword() {
             const passwordInput = document.getElementById('password');
             const eyeIcon = document.getElementById('eye-icon');
-            
+
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 eyeIcon.innerHTML = `
@@ -88,7 +117,12 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 `;
             }
+            // checkInputs() vẫn gọi, nhưng nếu isSubmitting=true thì sẽ không thực hiện gì cả
+            checkInputs();
         }
+
+        // Khởi tạo state khi trang load (xử lý browser autofill)
+        document.addEventListener('DOMContentLoaded', checkInputs);
     </script>
 </body>
 </html>

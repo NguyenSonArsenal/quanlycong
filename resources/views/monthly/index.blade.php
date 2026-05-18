@@ -34,11 +34,9 @@
     class="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4 mb-5 flex flex-wrap items-end gap-4">
 
     {{-- Cửa hàng --}}
-    <div class="flex-1 min-w-[160px]">
+    <div class="flex-1 min-w-[200px]">
         <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1.5">Cửa hàng</label>
-        <select name="store_id" id="store_id"
-            class="w-full px-3 py-2 rounded-lg border border-slate-200 outline-none font-medium text-slate-700 text-sm bg-white"
-            onchange="this.form.submit()">
+        <select name="store_id" id="select-store" style="width:100%">
             <option value="">— Chọn cửa hàng —</option>
             @foreach($stores as $st)
             <option value="{{ $st->id }}" {{ $storeId == $st->id ? 'selected' : '' }}>
@@ -49,11 +47,9 @@
     </div>
 
     {{-- Nhân viên (chỉ hiện khi đã chọn store) --}}
-    <div class="flex-1 min-w-[160px]">
+    <div class="flex-1 min-w-[200px]">
         <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1.5">Nhân viên</label>
-        <select name="user_id"
-            class="w-full px-3 py-2 rounded-lg border border-slate-200 outline-none font-medium text-slate-700 text-sm bg-white {{ !$storeId ? 'opacity-50 cursor-not-allowed' : '' }}"
-            {{ !$storeId ? 'disabled' : '' }}>
+        <select name="user_id" id="select-user" style="width:100%" {{ !$storeId ? 'disabled' : '' }}>
             <option value="">— Tất cả nhân viên —</option>
             @foreach($allUsers as $u)
             <option value="{{ $u->id }}" {{ $userId == $u->id ? 'selected' : '' }}>
@@ -237,26 +233,18 @@
                                 <span class="px-2 py-1 bg-emerald-50 border border-emerald-100 rounded-lg text-[10px] font-bold text-emerald-600 flex items-center gap-1">
                                     🔓 Mở
                                 </span>
-                                @endif
 
                                 @if(auth()->user()->role === 'admin' || auth()->user()->role === 'store_manager')
                                 <form action="{{ route('fe.monthly.toggle-lock', $st->id) }}" method="POST" class="inline">
                                     @csrf
                                     <input type="hidden" name="month" value="{{ $month }}">
-                                    @if($sum['is_month_locked'])
-                                    <input type="hidden" name="action" value="unlock">
-                                    <button type="submit" onclick="return confirm('Mở khoá bảng công toàn bộ cửa hàng {{ $st->name }} trong tháng {{ $month }}?')" 
-                                            class="px-2 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 text-[10px] font-bold rounded-lg active:scale-95 transition-all">
-                                        🔓 Mở khoá
-                                    </button>
-                                    @else
                                     <input type="hidden" name="action" value="lock">
                                     <button type="submit" onclick="return confirm('Khoá bảng công toàn bộ cửa hàng {{ $st->name }} trong tháng {{ $month }}? Mọi ca làm sẽ ở chế độ Read-only.')"
-                                            class="px-2 py-1 bg-slate-900 hover:bg-rose-600 text-white text-[10px] font-bold rounded-lg active:scale-95 transition-all">
+                                             class="px-2 py-1 bg-slate-900 hover:bg-rose-600 text-white text-[10px] font-bold rounded-lg active:scale-95 transition-all">
                                         🔒 Khoá tháng
                                     </button>
-                                    @endif
                                 </form>
+                                @endif
                                 @endif
                             </div>
                         </td>
@@ -522,3 +510,38 @@
 @endif
 
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    // Select2 cho Cửa hàng
+    $('#select-store').select2({
+        placeholder: '— Chọn cửa hàng —',
+        allowClear: true,
+        width: '100%',
+        language: {
+            searching: function() { return 'Đang tìm...'; },
+            noResults: function() { return 'Không tìm thấy'; }
+        }
+    }).on('select2:select select2:clear', function () {
+        // Auto-submit khi chọn cửa hàng
+        $(this).closest('form').submit();
+    });
+
+    // Select2 cho Nhân viên
+    var $userSelect = $('#select-user');
+    $userSelect.select2({
+        placeholder: '— Tất cả nhân viên —',
+        allowClear: true,
+        width: '100%',
+        @if(!$storeId)
+        disabled: true,
+        @endif
+        language: {
+            searching: function() { return 'Đang tìm kiếm...'; },
+            noResults: function() { return 'Không tìm thấy nhân viên'; }
+        }
+    });
+});
+</script>
+@endpush

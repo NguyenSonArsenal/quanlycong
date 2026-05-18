@@ -80,6 +80,7 @@
                         <select name="role" class="w-full px-3 py-2 rounded-lg border {{ $errors->has('role') ? 'border-rose-400 bg-rose-50' : 'border-slate-200' }} outline-none text-sm">
                             <option value="staff" {{ old('role','staff') === 'staff' ? 'selected' : '' }}>Nhân viên</option>
                             <option value="store_manager" {{ old('role') === 'store_manager' ? 'selected' : '' }}>Quản lý cửa hàng</option>
+                            <option value="area_manager" {{ old('role') === 'area_manager' ? 'selected' : '' }}>Area Manager</option>
                             <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin hệ thống</option>
                         </select>
                     </div>
@@ -91,11 +92,13 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1.5">Lương theo giờ (đ) <span class="text-rose-500">*</span></label>
-                        <input type="number" name="hourly_rate" value="{{ old('hourly_rate', 25000) }}"
-                            class="w-full px-3 py-2 rounded-lg border {{ $errors->has('hourly_rate') ? 'border-rose-400 bg-rose-50' : 'border-slate-200' }} outline-none text-sm focus:border-blue-300"
-                            min="0" step="1000" placeholder="25000">
-                        @error('hourly_rate') <p class="text-rose-500 text-[10px] mt-1">{{ $message }}</p> @enderror
+                        <label class="block text-xs font-bold text-slate-600 mb-1.5">Lương theo giờ</label>
+                        <div class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-700 flex items-center justify-between">
+                            <span id="hourly-rate-display">— Chọn chức danh —</span>
+                            <span class="text-[10px] text-slate-400">Ấy từ chức danh</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Được tự động lấy theo cấu hình lương của chức danh đã chọn.</p>
+                        <input type="hidden" name="hourly_rate" id="hourly-rate-input" value="0">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-600 mb-1.5">Trạng thái</label>
@@ -123,3 +126,29 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+const positionRates = @json($positions->pluck('default_hourly_rate', 'id'));
+
+const posSelect   = document.querySelector('select[name="position_id"]');
+const rateDisplay = document.getElementById('hourly-rate-display');
+const rateInput   = document.getElementById('hourly-rate-input');
+
+function syncRate() {
+    const posId = posSelect.value;
+    const rate  = positionRates[posId] ?? null;
+    if (rate !== null && rate > 0) {
+        rateInput.value = rate;
+        rateDisplay.textContent = new Intl.NumberFormat('vi-VN').format(rate) + 'đ/giờ';
+    } else {
+        rateInput.value = 0;
+        rateDisplay.textContent = '— Chọn chức danh —';
+    }
+}
+
+posSelect.addEventListener('change', syncRate);
+// Trigger on load if already selected
+if (posSelect.value) syncRate();
+</script>
+@endpush

@@ -10,12 +10,14 @@
             <h1 class="text-xl font-bold text-slate-900">Danh sách Cửa hàng toàn chuỗi</h1>
             <p class="text-sm text-slate-500 mt-1">Quản lý danh sách chi nhánh, mã định danh và thông tin khu vực địa lý của KRIK</p>
         </div>
+        @if(auth()->user()->role === 'admin')
         <button onclick="openCreateModal()" class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm shadow-slate-900/10 hover:shadow-lg hover:shadow-slate-900/20 active:scale-[0.98]">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
             Thêm cửa hàng mới
         </button>
+        @endif
     </div>
 
     <!-- Thanh bộ lọc & Tìm kiếm nâng cao -->
@@ -85,7 +87,9 @@
                         <th class="px-4 py-3">Mã cửa hàng</th>
                         <th class="px-4 py-3">Tên chi nhánh</th>
                         <th class="px-4 py-3">Mã khu vực</th>
+                        @if(auth()->user()->role === 'admin')
                         <th class="px-4 py-3 text-right">Thao tác xử lý</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm">
@@ -102,6 +106,7 @@
                                     {{ $store->area_id ?: 'Chưa set' }}
                                 </span>
                             </td>
+                            @if(auth()->user()->role === 'admin')
                             <td class="px-4 py-2.5 text-right">
                                 <div class="flex items-center justify-end gap-3.5">
                                     <!-- Nút Sửa -->
@@ -126,10 +131,11 @@
                                     </form>
                                 </div>
                             </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center text-slate-400">
+                            <td colspan="{{ auth()->user()->role === 'admin' ? 4 : 3 }}" class="px-6 py-12 text-center text-slate-400">
                                 <div class="flex flex-col items-center justify-center gap-3">
                                     <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
