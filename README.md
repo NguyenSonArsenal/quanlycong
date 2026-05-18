@@ -35,7 +35,7 @@ php artisan migrate --seed
 php artisan serve
 ```
 
-Truy cập: **http://localhost:8000/staff-shift-kpi/login**
+Truy cập: **/staff-shift-kpi/login**
 
 ---
 
@@ -135,7 +135,7 @@ php artisan test
 
 ## 7. Demo
 
-- **Demo URL**: http://dev.quanlycong.jp/staff-shift-kpi/login
+- **Demo URL**: staff-shift-kpi/login
 - **Login nhanh**: `admin` / `password`
 
 > Dữ liệu mẫu: Store K01 — tháng 5/2026 — đầy đủ KPI config, ca làm và bảng lương.

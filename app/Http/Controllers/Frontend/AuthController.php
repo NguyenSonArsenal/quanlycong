@@ -7,7 +7,13 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller {
     public function showLogin() {
-        if (Auth::check()) return redirect('/staff-shift-kpi/daily');
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user && $user->role === 'admin') {
+                return redirect('/staff-shift-kpi/kpi-config');
+            }
+            return redirect('/staff-shift-kpi/daily');
+        }
         return view('auth.login');
     }
 
@@ -19,6 +25,10 @@ class AuthController extends Controller {
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            $user = Auth::user();
+            if ($user && $user->role === 'admin') {
+                return redirect('/staff-shift-kpi/kpi-config');
+            }
             return redirect()->intended('/staff-shift-kpi/daily');
         }
 

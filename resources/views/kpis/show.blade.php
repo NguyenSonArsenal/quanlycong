@@ -29,15 +29,12 @@
         <span class="text-slate-300">/</span>
         <span class="text-xs font-bold text-slate-600">{{ \Carbon\Carbon::parse($config->month.'-01')->locale('vi')->isoFormat('MMMM Y') }}</span>
     </div>
-    <form action="{{ route('fe.kpi-config.regenerate', $config->id) }}" method="POST">@csrf
-        <button type="submit" class="px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-xs font-bold hover:bg-blue-100">🔄 Tính lại targets</button>
-    </form>
 </div>
 
 @if(session('success'))<div class="mb-2 bg-emerald-50 border-l-4 border-emerald-400 text-emerald-700 text-xs px-4 py-2 rounded-r-lg">{{ session('success') }}</div>@endif
 @if(session('error'))<div class="mb-2 bg-rose-50 border-l-4 border-rose-400 text-rose-700 text-xs px-4 py-2 rounded-r-lg">{{ session('error') }}</div>@endif
 
-<form action="{{ route('fe.kpi-config.update-matrix', $config->id) }}" method="POST" id="mainForm">
+<form action="{{ route('fe.kpi-config.update-matrix', $config->id) }}" method="POST" id="mainForm" onsubmit="handleSubmit(event)">
 @csrf
 
 {{-- ═══ CONFIG PANEL ═══ --}}
@@ -50,8 +47,8 @@
                 {{-- Input hiển thị có dấu chấm, hidden input gửi form --}}
                 <input type="text" id="inp_total_display"
                     value="{{ number_format($total,0,',','.') }}"
-                    class="flex-1 px-3 py-2 rounded-lg border border-emerald-200 focus:border-emerald-400 outline-none font-black text-emerald-700 text-sm text-left"
-                    oninput="onTotalInput(this)" onfocus="this.value=this.value.replace(/\./g,'')" onblur="formatTotalDisplay()">
+                    class="flex-1 px-3 py-2 rounded-lg border border-emerald-200 focus:border-emerald-400 outline-none font-black text-emerald-700 text-sm text-left {{ $config->is_saved ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : '' }}"
+                    oninput="onTotalInput(this)" onfocus="this.value=this.value.replace(/\./g,'')" onblur="formatTotalDisplay()" {{ $config->is_saved ? 'disabled' : '' }}>
                 <input type="hidden" name="total_target" id="inp_total" value="{{ $total }}">
                 <span class="text-xs text-slate-400 font-bold">đ</span>
             </div>
@@ -66,9 +63,9 @@
             <div class="flex gap-2">
                 @foreach(['morning'=>'🌅','afternoon'=>'☀️','evening'=>'🌙'] as $k=>$icon)
                 <div class="flex-1 text-center">
-                    <span class="text-[9px] text-slate-400 block">{{ $icon }}</span>
-                    <input type="number" name="shift_weekday[{{ $k }}]" value="{{ number_format($swd[$k]??0,2,'.','') }}" step="0.01" min="0" max="100"
-                        class="wd-shift w-full px-1 py-1 rounded border border-slate-200 font-bold text-amber-700 text-center text-xs outline-none" oninput="checkShift('wd')">
+                     <span class="text-[9px] text-slate-400 block">{{ $icon }}</span>
+                     <input type="number" name="shift_weekday[{{ $k }}]" value="{{ number_format($swd[$k]??0,2,'.','') }}" step="0.01" min="0" max="100"
+                        class="wd-shift w-full px-1 py-1 rounded border border-slate-200 font-bold text-amber-700 text-center text-xs outline-none {{ $config->is_saved ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : '' }}" oninput="checkShift('wd')" {{ $config->is_saved ? 'disabled' : '' }}>
                 </div>
                 @endforeach
             </div>
@@ -84,7 +81,7 @@
                 <div class="flex-1 text-center">
                     <span class="text-[9px] text-slate-400 block">{{ $icon }}</span>
                     <input type="number" name="shift_weekend[{{ $k }}]" value="{{ number_format($swe[$k]??0,2,'.','') }}" step="0.01" min="0" max="100"
-                        class="we-shift w-full px-1 py-1 rounded border border-slate-200 font-bold text-indigo-700 text-center text-xs outline-none transition-colors" oninput="checkShift('we')">
+                        class="we-shift w-full px-1 py-1 rounded border border-slate-200 font-bold text-indigo-700 text-center text-xs outline-none transition-colors {{ $config->is_saved ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : '' }}" oninput="checkShift('we')" {{ $config->is_saved ? 'disabled' : '' }}>
                 </div>
                 @endforeach
             </div>
@@ -96,24 +93,24 @@
                 <div class="flex-1 text-center">
                     <p class="text-[9px] text-blue-400 font-bold mb-0.5">T2–T5 <span class="opacity-50">(%)</span></p>
                     <input type="number" id="early_pct" value="{{ $earlyPct }}" step="0.01" min="0.01" max="99.99"
-                        class="w-full px-2 py-1.5 rounded border border-blue-200 font-black text-blue-600 text-center text-sm outline-none focus:border-blue-400 transition-colors"
-                        oninput="onEarlyChange()">
+                        class="w-full px-2 py-1.5 rounded border border-blue-200 font-black text-blue-600 text-center text-sm outline-none focus:border-blue-400 transition-colors {{ $config->is_saved ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : '' }}"
+                        oninput="onEarlyChange()" {{ $config->is_saved ? 'disabled' : '' }}>
                 </div>
                 <span class="text-slate-400 font-black text-lg mt-4">:</span>
                 <div class="flex-1 text-center">
                     <p class="text-[9px] text-rose-400 font-bold mb-0.5">T6–CN <span class="opacity-50">(%)</span></p>
                     <input type="number" id="late_pct" value="{{ $latePct }}" step="0.01" min="0.01" max="99.99"
-                        class="w-full px-2 py-1.5 rounded border border-rose-200 font-black text-rose-600 text-center text-sm outline-none focus:border-rose-400 transition-colors"
-                        oninput="onLateChange()">
+                        class="w-full px-2 py-1.5 rounded border border-rose-200 font-black text-rose-600 text-center text-sm outline-none focus:border-rose-400 transition-colors {{ $config->is_saved ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : '' }}"
+                        oninput="onLateChange()" {{ $config->is_saved ? 'disabled' : '' }}>
                 </div>
             </div>
             <div class="flex gap-1">
                 <button type="button" id="btn_preset_equal" onclick="applyPreset('equal')"
-                    class="flex-1 py-1 rounded text-[9px] font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-300">
+                    class="flex-1 py-1 rounded text-[9px] font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-blue-100 hover:text-blue-700 hover:border-blue-300 {{ $config->is_saved ? 'opacity-50 cursor-not-allowed pointer-events-none' : '' }}" {{ $config->is_saved ? 'disabled' : '' }}>
                     = Bằng nhau
                 </button>
                 <button type="button" id="btn_preset_weekend" onclick="applyPreset('strong_weekend')"
-                    class="flex-1 py-1 rounded text-[9px] font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-rose-100 hover:text-rose-700 hover:border-rose-300">
+                    class="flex-1 py-1 rounded text-[9px] font-bold border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-rose-100 hover:text-rose-700 hover:border-rose-300 {{ $config->is_saved ? 'opacity-50 cursor-not-allowed pointer-events-none' : '' }}" {{ $config->is_saved ? 'disabled' : '' }}>
                     W+ Cuối tuần mạnh
                 </button>
             </div>
@@ -131,7 +128,9 @@
         <th class="px-3 py-2 border-r border-slate-700 whitespace-nowrap w-[165px]">
             KPI Tuần
             <br><span id="wk_badge" class="text-[9px] font-normal text-emerald-300">Tổng: 100%</span>
+            @if(!$config->is_saved)
             <br><button type="button" onclick="autoDistributeWeeks()" class="mt-0.5 px-1.5 py-0.5 rounded bg-amber-500 hover:bg-amber-400 text-white text-[8px] font-bold transition-all" title="Phân bổ % theo số ngày thực tế">⚖ Theo ngày</button>
+            @endif
         </th>
         <th class="px-2 py-2 border-r border-slate-600 bg-blue-900" colspan="4">Ngày thường (T2–T5)</th>
         <th class="px-2 py-2 bg-rose-900" colspan="3">Cuối tuần (T6–CN)</th>
@@ -159,7 +158,7 @@
             $dow = \Carbon\Carbon::parse($t->date)->isoWeekday();
             $actualRevenue = (float)($actualByDate[$t->date] ?? 0);
             
-            $effectiveTarget = ($t->rebalanced_target && $t->rebalanced_target > 0)
+            $effectiveTarget = !is_null($t->rebalanced_target)
                 ? (float)$t->rebalanced_target
                 : (float)$t->target_amount;
             $byDow[$dow]  = ($byDow[$dow] ?? 0) + $effectiveTarget;
@@ -201,7 +200,7 @@
             <div class="flex flex-col items-center gap-1">
                 <div class="flex items-center gap-1">
                     <input type="number" name="week_weights[{{ $w }}]" value="{{ number_format($weekWt,2,'.','') }}" step="0.01" min="0" max="100"
-                        class="week-w w-20 px-2 py-1 rounded border border-blue-200 font-black text-blue-700 text-center text-xs outline-none shadow-sm" oninput="recalc()">
+                        class="week-w w-20 px-2 py-1 rounded border border-blue-200 font-black text-blue-700 text-center text-xs outline-none shadow-sm {{ $config->is_saved ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : '' }}" oninput="recalc()" {{ $config->is_saved ? 'disabled' : '' }}>
                     <span class="text-[9px] font-bold text-slate-400">%</span>
                 </div>
                 @php
@@ -266,13 +265,18 @@
     @for($d=1;$d<=7;$d++)
     <input type="hidden" name="day_weights[{{ $d }}]" class="day-w" data-dow="{{ $d }}" value="{{ $dr[$d] }}">
     @endfor
-    <button type="submit" onclick="return validateForm()" class="bg-rose-500 text-white px-10 py-3 rounded-xl font-black text-sm hover:bg-rose-600 shadow-lg active:scale-95 transition-all uppercase tracking-tight">✓ LƯU CẤU HÌNH KPI</button>
+    @if(!$config->is_saved)
+    <button type="submit" class="bg-rose-500 text-white px-10 py-3 rounded-xl font-black text-sm hover:bg-rose-600 shadow-lg active:scale-95 transition-all uppercase tracking-tight">✓ LƯU CẤU HÌNH KPI</button>
+    @else
+    <span class="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 text-sm font-bold uppercase tracking-tight cursor-not-allowed">🔒 Cấu hình đã được khóa</span>
+    @endif
 </div>
 </form>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 let TOTAL = {{ $total }};
+const IS_SAVED = @json($config->is_saved);
 const LOCKED_WEEKS = @json($config->locked_weeks ?? []);
 const WEEK_ACTUALS = {
     @for($w=1;$w<=5;$w++)
@@ -281,7 +285,7 @@ const WEEK_ACTUALS = {
 };
 const DB_WEEK_TARGETS = {
     @for($w=1;$w<=5;$w++)
-        '{{ $w }}': {{ $weeks[$w] ? collect($weeks[$w]['targets'])->sum(fn($t) => $t ? (($t->rebalanced_target && $t->rebalanced_target > 0) ? $t->rebalanced_target : $t->target_amount) : 0) : 0 }},
+        '{{ $w }}': {{ $weeks[$w] ? collect($weeks[$w]['targets'])->sum(fn($t) => $t ? ((!is_null($t->rebalanced_target)) ? $t->rebalanced_target : $t->target_amount) : 0) : 0 }},
     @endfor
 };
 
@@ -455,7 +459,7 @@ function recalc(){
 
     for(let w=1;w<=5;w++){
         let wAmt = 0;
-        if (w <= maxLockedWeek) {
+        if (IS_SAVED || w <= maxLockedWeek) {
             if (LOCKED_WEEKS.includes(w)) {
                 wAmt = WEEK_ACTUALS[w] || 0;
             } else {
@@ -501,7 +505,7 @@ function recalc(){
             const actual = parseInt(cell.dataset.actual) || 0;
             let val = 0;
 
-            if (w <= maxLockedWeek) {
+            if (IS_SAVED || w <= maxLockedWeek) {
                 val = Math.round(parseFloat(cell.dataset.initTarget) || 0);
             } else {
                 const dAmt = wDS > 0 ? wAmt * (dw[dow]||1) / wDS : 0;
@@ -520,11 +524,33 @@ function recalc(){
 
 function validateForm(){
     const ww=getWW(), ws=ww.reduce((a,b)=>a+b,0);
-    if(Math.abs(ws-100)>0.5){ alert('T\u1ed5ng % tu\u1ea7n ph\u1ea3i = 100%! Hi\u1ec7n: '+ws.toFixed(2)+'%'); return false; }
-    const eu = parseInt(document.getElementById('early_unit').value)||0;
-    const lu = parseInt(document.getElementById('late_unit').value)||0;
-    if(eu<1||lu<1){ alert('\u0110\u01a1n v\u1ecb ng\u00e0y ph\u1ea3i \u2265 1!'); return false; }
+    if(Math.abs(ws-100)>0.5){ Swal.fire('Lỗi', 'Tổng tỷ trọng 5 tuần phải bằng 100%! Hiện: '+ws.toFixed(2)+'%', 'error'); return false; }
+    const ep = parseFloat(document.getElementById('early_pct').value)||0;
+    const lp = parseFloat(document.getElementById('late_pct').value)||0;
+    if(ep <= 0 || lp <= 0){ Swal.fire('Lỗi', 'Tỷ lệ ngày phải lớn hơn 0!', 'error'); return false; }
     return true;
+}
+
+async function handleSubmit(event) {
+    event.preventDefault();
+    if (!validateForm()) return;
+
+    const result = await Swal.fire({
+        title: '⚠️ Xác nhận lưu cấu hình?',
+        html: 'Lưu ý: Chỉ được lưu cấu hình này <b>1 lần duy nhất</b>.<br>Khi đã lưu, tỷ trọng ca ngày thường và tỷ lệ KPI ngày sẽ bị khóa cứng không cho phép sửa đổi.<br>Bạn có chắc chắn muốn lưu?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '✓ Đồng ý, lưu cấu hình',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#e11d48', // rose-600
+        cancelButtonColor: '#64748b',  // slate-500
+    });
+
+    if (result.isConfirmed) {
+        const form = document.getElementById('mainForm');
+        form.onsubmit = null;
+        form.submit();
+    }
 }
 
 // -- Khoa tuan & rebalance KPI cac tuan con lai --

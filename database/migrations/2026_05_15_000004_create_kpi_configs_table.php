@@ -24,6 +24,8 @@ class CreateKpiConfigsTable extends Migration {
             // weekend: {morning: 12, afternoon: 45, evening: 43}
             $table->json('shift_ratios_weekend')->nullable();
 
+            $table->boolean('is_saved')->default(false);
+
             $table->unique(['store_id', 'month']);
             $table->timestamps();
             $table->softDeletes();

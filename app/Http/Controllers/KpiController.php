@@ -221,6 +221,12 @@ class KpiController extends Controller
     public function lockWeek(Request $request, $id)
     {
         $config = KpiConfig::findOrFail($id);
+        if ($this->isMonthLocked($config)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => '❌ Tháng này đã được khóa. Không thể khóa tuần!'
+            ], 403);
+        }
         $weekNo = (int)$request->week_number; // 1-5
 
         $lockedWeeks = $config->locked_weeks ?? [];
@@ -252,7 +258,7 @@ class KpiController extends Controller
             ->whereIn('date', $currWDates)
             ->sum('personal_revenue');
         $targetThisWeek = $allTargets->filter(fn($t) => ($weekByDate[$t->date] ?? 0) === $weekNo)
-            ->sum(fn($t) => ($t->rebalanced_target && $t->rebalanced_target > 0) ? $t->rebalanced_target : $t->target_amount);
+            ->sum(fn($t) => !is_null($t->rebalanced_target) ? $t->rebalanced_target : $t->target_amount);
         $diff = $actualThisWeek - $targetThisWeek;
 
         $futureWeeks = collect(range($weekNo + 1, 5))->filter(fn($w) => isset($config->weekly_ratios[$w]));
@@ -271,6 +277,12 @@ class KpiController extends Controller
     public function unlockWeek(Request $request, $id)
     {
         $config = KpiConfig::findOrFail($id);
+        if ($this->isMonthLocked($config)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => '❌ Tháng này đã được khóa. Không thể mở khóa tuần!'
+            ], 403);
+        }
         $weekNo = (int)$request->week_number; // 1-5
 
         $lockedWeeks = $config->locked_weeks ?? [];
@@ -341,7 +353,7 @@ class KpiController extends Controller
             } elseif ($w <= $maxLockedWeek) {
                 // Đã qua nhưng không khóa -> dùng target hiện tại của nó
                 $targetW = $allTargets->filter(fn($t) => ($weekByDate[$t->date] ?? 0) === $w)
-                    ->sum(fn($t) => ($t->rebalanced_target && $t->rebalanced_target > 0) ? $t->rebalanced_target : $t->target_amount);
+                    ->sum(fn($t) => !is_null($t->rebalanced_target) ? $t->rebalanced_target : $t->target_amount);
                 $pastContribution += $targetW;
             }
         }
@@ -443,6 +455,7 @@ class KpiController extends Controller
                 'daily_ratios'         => $dailyRatios,
                 'shift_ratios_weekday' => $shiftWeekday,
                 'shift_ratios_weekend' => $shiftWeekend,
+                'is_saved'             => true,
             ]);
 
             // Tính lại daily_targets
@@ -522,11 +535,20 @@ class KpiController extends Controller
                 DailyTarget::create([
                     'kpi_config_id'     => $config->id,
                     'date'              => $date->toDateString(),
-                    'week_number'       => $wn,          // fix: d\u00f9ng $wn (key) thay v\u00ec $weekNum
+                    'week_number'       => $wn,          // fix: dùng $wn (key) thay vì $weekNum
                     'target_amount'     => round($dayTarget, 2),
                     'rebalanced_target' => round($dayTarget, 2),
                 ]);
             }
         }
+    }
+
+    private function isMonthLocked(KpiConfig $config): bool
+    {
+        $month = $config->month;
+        $storeId = $config->store_id;
+        $totalShifts = ShiftRecord::where('store_id', $storeId)->where('date', 'like', "$month%")->count();
+        $lockedShifts = ShiftRecord::where('store_id', $storeId)->where('date', 'like', "$month%")->where('is_locked', true)->count();
+        return $totalShifts > 0 && $totalShifts === $lockedShifts;
     }
 }
